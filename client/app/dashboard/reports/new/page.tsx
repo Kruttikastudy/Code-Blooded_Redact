@@ -74,7 +74,7 @@ export default function AddReportPage() {
         }, 1500);
 
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/analyze`, {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/analyze`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -92,6 +92,8 @@ export default function AddReportPage() {
             if (!result.analysis) {
                 throw new Error("Invalid response format from server");
             }
+
+            console.log("AI Analysis Predictions:", result.analysis.predictions);
 
             clearInterval(stepInterval);
             setAnalysisStep(5);
