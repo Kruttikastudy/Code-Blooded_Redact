@@ -301,7 +301,6 @@ def analyze_symptoms(request: AnalysisRequest, session: Session = Depends(get_se
         # --- Step 6: Save to Database ---
         db_report = PatientReport(
             patient_name=clean_features.get("name"),
-            patient_name=clean_features.get("name"),
             # age and sex removed from input
 
             health_score=health_score,
