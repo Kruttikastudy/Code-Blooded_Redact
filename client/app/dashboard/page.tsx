@@ -6,8 +6,25 @@ import {
     Brain, TrendingUp, Calendar, Clock,
     ChevronRight, MoreHorizontal, Bell, Search, AlertCircle, FileText
 } from 'lucide-react';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
 
 export default function Dashboard() {
+    const [userName, setUserName] = useState('User');
+
+    useEffect(() => {
+        // Fetch user name from localStorage
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+            try {
+                const user = JSON.parse(userStr);
+                setUserName(user.name || 'User');
+            } catch (e) {
+                console.error('Failed to parse user data:', e);
+            }
+        }
+    }, []);
+
     // Mock Data
     const healthScore = 85;
     const vitals = [
@@ -89,7 +106,7 @@ export default function Dashboard() {
                 {/* Header Section */}
                 <header className="flex justify-between items-center">
                     <div>
-                        <h1 className="text-3xl font-bold text-slate-900">Welcome, Bhargavi</h1>
+                        <h1 className="text-3xl font-bold text-slate-900">Welcome, {userName}</h1>
                         <p className="text-slate-500 mt-1">Here's your daily health summary</p>
                     </div>
                     <div className="flex items-center gap-4">
@@ -130,9 +147,9 @@ export default function Dashboard() {
                                         Your vitals are looking great today. You're in the top 15% of your age group. Keep up the good work!
                                     </p>
                                 </div>
-                                <button className="mt-6 px-6 py-3 bg-slate-900 text-white rounded-xl font-medium hover:bg-slate-800 transition-colors flex items-center gap-2 w-fit">
+                                <Link href="/dashboard/report/detailed" className="mt-6 px-6 py-3 bg-slate-900 text-white rounded-xl font-medium hover:bg-slate-800 transition-colors flex items-center gap-2 w-fit">
                                     View Detailed Report <ChevronRight size={16} />
-                                </button>
+                                </Link>
                             </div>
 
                             {/* Fixed Health Score Clipping: Increased container size and adjusted SVG viewBox/padding */}

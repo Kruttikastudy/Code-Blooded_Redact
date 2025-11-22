@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Mail, Lock } from 'lucide-react';
+import { X, Mail, Lock, User as UserIcon } from 'lucide-react';
 import { NeonButton } from './ui/NeonButton';
 
 interface LoginModalProps {
@@ -13,21 +13,84 @@ interface LoginModalProps {
 
 export function LoginModal({ isOpen, onClose }: LoginModalProps) {
     const router = useRouter();
+    const [mode, setMode] = useState<'login' | 'signup'>('login');
+
+    // Form states
+    const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState('');
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setError('');
         setIsLoading(true);
 
-        // Simulate login delay
-        setTimeout(() => {
-            console.log('Login attempted with:', { email, password });
+        try {
+            if (mode === 'signup') {
+                // Validate passwords match
+                if (password !== confirmPassword) {
+                    setError('Passwords do not match');
+                    setIsLoading(false);
+                    return;
+                }
+
+                // Call signup API
+                const response = await fetch('http://localhost:8000/api/auth/signup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, password })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.detail || 'Signup failed');
+                }
+
+                // Store user info in localStorage (for session management)
+                localStorage.setItem('user', JSON.stringify(data.user));
+
+                // Redirect to dashboard
+                onClose();
+                router.push('/dashboard');
+            } else {
+                // Call login API
+                const response = await fetch('http://localhost:8000/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.detail || 'Login failed');
+                }
+
+                // Store user info in localStorage (for session management)
+                localStorage.setItem('user', JSON.stringify(data.user));
+
+                // Redirect to dashboard
+                onClose();
+                router.push('/dashboard');
+            }
+        } catch (err: any) {
+            setError(err.message || 'An error occurred');
+        } finally {
             setIsLoading(false);
-            onClose();
-            router.push('/dashboard');
-        }, 1500);
+        }
+    };
+
+    const toggleMode = () => {
+        setMode(mode === 'login' ? 'signup' : 'login');
+        setError('');
+        setName('');
+        setEmail('');
+        setPassword('');
+        setConfirmPassword('');
     };
 
     return (
@@ -61,12 +124,44 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
                                 >
                                     <X size={20} />
                                 </button>
-                                <h2 className="text-2xl font-bold mb-2">Welcome to MediGuard</h2>
-                                <p className="text-blue-100 text-sm">Sign in to access your account</p>
+                                <h2 className="text-2xl font-bold mb-2">
+                                    {mode === 'login' ? 'Welcome Back' : 'Create Account'}
+                                </h2>
+                                <p className="text-blue-100 text-sm">
+                                    {mode === 'login' ? 'Sign in to access your account' : 'Join MediGuard today'}
+                                </p>
                             </div>
 
                             {/* Form */}
                             <form onSubmit={handleSubmit} className="p-8 space-y-6">
+                                {/* Error Message */}
+                                {error && (
+                                    <div className="bg-rose-50 border border-rose-200 text-rose-600 px-4 py-3 rounded-xl text-sm">
+                                        {error}
+                                    </div>
+                                )}
+
+                                {/* Name Input (Signup only) */}
+                                {mode === 'signup' && (
+                                    <div>
+                                        <label htmlFor="name" className="block text-sm font-medium text-slate-700 mb-2">
+                                            Full Name
+                                        </label>
+                                        <div className="relative">
+                                            <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+                                            <input
+                                                id="name"
+                                                type="text"
+                                                value={name}
+                                                onChange={(e) => setName(e.target.value)}
+                                                placeholder="John Doe"
+                                                required
+                                                className="w-full pl-11 pr-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+
                                 {/* Email Input */}
                                 <div>
                                     <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-2">
@@ -105,12 +200,26 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
                                     </div>
                                 </div>
 
-                                {/* Forgot Password Link */}
-                                <div className="flex justify-end">
-                                    <a href="#" className="text-sm text-blue-600 hover:text-blue-700 font-medium">
-                                        Forgot password?
-                                    </a>
-                                </div>
+                                {/* Confirm Password (Signup only) */}
+                                {mode === 'signup' && (
+                                    <div>
+                                        <label htmlFor="confirmPassword" className="block text-sm font-medium text-slate-700 mb-2">
+                                            Confirm Password
+                                        </label>
+                                        <div className="relative">
+                                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+                                            <input
+                                                id="confirmPassword"
+                                                type="password"
+                                                value={confirmPassword}
+                                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                                placeholder="••••••••"
+                                                required
+                                                className="w-full pl-11 pr-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                                            />
+                                        </div>
+                                    </div>
+                                )}
 
                                 {/* Submit Button */}
                                 <NeonButton
@@ -123,19 +232,23 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
                                     {isLoading ? (
                                         <div className="flex items-center justify-center gap-2">
                                             <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                            <span>Signing in...</span>
+                                            <span>{mode === 'login' ? 'Signing in...' : 'Creating account...'}</span>
                                         </div>
                                     ) : (
-                                        'Sign In'
+                                        mode === 'login' ? 'Sign In' : 'Create Account'
                                     )}
                                 </NeonButton>
 
-                                {/* Sign Up Link */}
+                                {/* Toggle Mode Link */}
                                 <p className="text-center text-sm text-slate-600">
-                                    Don't have an account?{' '}
-                                    <a href="#" className="text-blue-600 hover:text-blue-700 font-medium">
-                                        Sign up
-                                    </a>
+                                    {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
+                                    <button
+                                        type="button"
+                                        onClick={toggleMode}
+                                        className="text-blue-600 hover:text-blue-700 font-medium"
+                                    >
+                                        {mode === 'login' ? 'Sign up' : 'Sign in'}
+                                    </button>
                                 </p>
                             </form>
                         </motion.div>

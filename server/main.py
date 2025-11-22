@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional, Dict, Any
@@ -11,6 +11,8 @@ from dotenv import load_dotenv
 import joblib
 from scipy.special import expit
 import pandas as pd
+from sqlmodel import Session, select
+from passlib.context import CryptContext
 
 CATBOOST_MODEL_PATH = r"C:\Users\ketak\OneDrive\Desktop\Projects\Code-Blooded_Redact\mediguard_catboost_scaled (1).pkl"
 catboost_model = joblib.load(CATBOOST_MODEL_PATH)
@@ -21,6 +23,11 @@ LABEL_MAP = {0: 'Anemia', 1: 'Diabetes', 2: 'Healthy', 3: 'Thalasse', 4: 'Thromb
 from intake_extraction_agent import IntakeExtractionAgent
 from data_quality_agent import DataQualityAgent
 from scaling_bridge import ScalingBridge
+from predictive_agent import PredictiveAgent
+
+# Import Database
+from database import create_db_and_tables, get_session
+from models import PatientReport, User
 
 load_dotenv()
 
@@ -29,6 +36,15 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("MediGuard-Server")
 
 app = FastAPI(title="MediGuard API")
+
+# Password hashing
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+# Startup: Create database tables
+@app.on_event("startup")
+def on_startup():
+    create_db_and_tables()
+    logger.info("Database tables created successfully")
 
 # CORS
 app.add_middleware(
@@ -43,6 +59,7 @@ app.add_middleware(
 intake_agent = IntakeExtractionAgent()
 quality_agent = DataQualityAgent()
 scaling_bridge = ScalingBridge()
+predictive_agent = PredictiveAgent()
 
 # Blockchain Simulation
 BLOCKCHAIN_FILE = "blockchain.json"
@@ -78,13 +95,100 @@ class AnalysisRequest(BaseModel):
     file_name: Optional[str] = None
     mode: Optional[str] = "text" # 'text' or 'pdf'
 
+class PredictionRequest(BaseModel):
+    features: Dict[str, Any]
+
+class SignupRequest(BaseModel):
+    name: str
+    email: str
+    password: str
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
 # Endpoints
 @app.get("/")
 def read_root():
-    return {"status": "MediGuard System Operational", "agents": ["Intake", "Quality", "Scaling"]}
+    return {"status": "MediGuard System Operational", "agents": ["Intake", "Quality", "Scaling", "Predictive"]}
+
+@app.post("/api/auth/signup")
+def signup(request: SignupRequest, session: Session = Depends(get_session)):
+    """Create a new user account and store in Neon database."""
+    logger.info(f"Signup request for email: {request.email}")
+    
+    try:
+        # Check if email already exists
+        existing_user = session.exec(select(User).where(User.email == request.email)).first()
+        if existing_user:
+            raise HTTPException(status_code=400, detail="Email already registered")
+        
+        # Hash password (bcrypt has 72 byte limit, so truncate if needed)
+        truncated_password = request.password[:72]
+        hashed_password = pwd_context.hash(truncated_password)
+        
+        # Create new user in database
+        new_user = User(
+            name=request.name,
+            email=request.email,
+            hashed_password=hashed_password
+        )
+        session.add(new_user)
+        session.commit()
+        session.refresh(new_user)
+        
+        logger.info(f"User created successfully: {new_user.id}")
+        
+        return {
+            "success": True,
+            "message": "Account created successfully",
+            "user": {
+                "id": new_user.id,
+                "name": new_user.name,
+                "email": new_user.email
+            }
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Signup failed: {e}")
+        raise HTTPException(status_code=500, detail="Failed to create account")
+
+@app.post("/api/auth/login")
+def login(request: LoginRequest, session: Session = Depends(get_session)):
+    """Validate user credentials against Neon database."""
+    logger.info(f"Login attempt for email: {request.email}")
+    
+    try:
+        # Find user by email
+        user = session.exec(select(User).where(User.email == request.email)).first()
+        
+        if not user:
+            raise HTTPException(status_code=401, detail="Invalid email or password")
+        
+        # Verify password
+        if not pwd_context.verify(request.password, user.hashed_password):
+            raise HTTPException(status_code=401, detail="Invalid email or password")
+        
+        logger.info(f"Login successful for user: {user.id}")
+        
+        return {
+            "success": True,
+            "message": "Login successful",
+            "user": {
+                "id": user.id,
+                "name": user.name,
+                "email": user.email
+            }
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Login failed: {e}")
+        raise HTTPException(status_code=500, detail="Login failed")
 
 @app.post("/api/analyze")
-def analyze_symptoms(request: AnalysisRequest):
+def analyze_symptoms(request: AnalysisRequest, session: Session = Depends(get_session)):
     logger.info(f"Received analysis request. Mode: {request.mode}")
     
     try:
@@ -194,10 +298,40 @@ def analyze_symptoms(request: AnalysisRequest):
         block = append_to_blockchain(log_entry)
         result["blockchain_log"] = block
         
+        # --- Step 6: Save to Database ---
+        db_report = PatientReport(
+            patient_name=clean_features.get("name"),
+            age=clean_features.get("age"),
+            sex=clean_features.get("sex"),
+            health_score=health_score,
+            triage_category=triage_category,
+            raw_text=request.text[:500],  # Store first 500 chars
+            features_json=json.dumps(clean_features),
+            warnings_json=json.dumps(unified_data["warnings"] + quality_report["warnings"]),
+            blockchain_hash=block["hash"]
+        )
+        session.add(db_report)
+        session.commit()
+        session.refresh(db_report)
+        
+        result["report_id"] = db_report.id
+        logger.info(f"Saved report to database with ID: {db_report.id}")
+        
         return result
 
     except Exception as e:
         logger.error(f"Analysis failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/detailed-analysis")
+def get_detailed_analysis(request: PredictionRequest):
+    """Endpoint for the Detailed Predictive Report."""
+    logger.info("Received detailed analysis request")
+    try:
+        predictions = predictive_agent.generate_predictions(request.features)
+        return {"predictions": predictions}
+    except Exception as e:
+        logger.error(f"Detailed analysis failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/blockchain")
@@ -207,3 +341,4 @@ def get_blockchain():
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
+

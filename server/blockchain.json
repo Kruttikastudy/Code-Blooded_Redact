@@ -12,106 +12,15 @@
   },
   {
     "index": 2,
-    "timestamp": "2025-11-22T19:21:33.639606",
+    "timestamp": "2025-11-22T18:30:40.949818",
     "data": {
       "type": "ANALYSIS_RESULT",
-      "timestamp": "2025-11-22T19:21:33.638607",
-      "health_score": 81,
+      "timestamp": "2025-11-22T18:30:40.936889",
+      "health_score": 100,
       "triage": "Green",
-      "features_hash": "c56e73e60e0228449285cd8ed53057af"
+      "features_hash": "cdce1abe21d0b8b8a45477511d1bca2f"
     },
     "prev_hash": "8dbf1b227f826cb96b550b729e42ecbedec0278e6d5e83e5f33e63ae770ef41a",
-    "hash": "c35c4c906031ae41c009d7d1c9edf2ead6dbb95e6751797d30d810fee8491b6d"
-  },
-  {
-    "index": 3,
-    "timestamp": "2025-11-22T19:33:05.956252",
-    "data": {
-      "type": "ANALYSIS_RESULT",
-      "timestamp": "2025-11-22T19:33:05.877710",
-      "health_score": 81,
-      "triage": "Green",
-      "features_hash": "9073064974124fd9d6122639aad13caa"
-    },
-    "prev_hash": "c35c4c906031ae41c009d7d1c9edf2ead6dbb95e6751797d30d810fee8491b6d",
-    "hash": "15a0ff84e909229e87992b95ab2d9156f7ac5e6b3312925ffa271e0414551f5e"
-  },
-  {
-    "index": 4,
-    "timestamp": "2025-11-22T19:33:14.298607",
-    "data": {
-      "type": "ANALYSIS_RESULT",
-      "timestamp": "2025-11-22T19:33:14.297597",
-      "health_score": 81,
-      "triage": "Green",
-      "features_hash": "9073064974124fd9d6122639aad13caa"
-    },
-    "prev_hash": "15a0ff84e909229e87992b95ab2d9156f7ac5e6b3312925ffa271e0414551f5e",
-    "hash": "8a239ea94f843dcbf82319594a1f8cbbfe39cf646ba68801e4e31078f71c2d90"
-  },
-  {
-    "index": 5,
-    "timestamp": "2025-11-22T19:46:49.641099",
-    "data": {
-      "type": "ANALYSIS_RESULT",
-      "timestamp": "2025-11-22T19:46:49.640102",
-      "health_score": 80,
-      "triage": "Green",
-      "features_hash": "4db15c93e5dbb4450527ec363a6a73d8"
-    },
-    "prev_hash": "8a239ea94f843dcbf82319594a1f8cbbfe39cf646ba68801e4e31078f71c2d90",
-    "hash": "ac5d607af4213a3c1d31b246b14c3834a6a28e6b1f510331cf2960c0375d48bc"
-  },
-  {
-    "index": 6,
-    "timestamp": "2025-11-22T19:47:02.466807",
-    "data": {
-      "type": "ANALYSIS_RESULT",
-      "timestamp": "2025-11-22T19:47:02.465774",
-      "health_score": 80,
-      "triage": "Green",
-      "features_hash": "4db15c93e5dbb4450527ec363a6a73d8"
-    },
-    "prev_hash": "ac5d607af4213a3c1d31b246b14c3834a6a28e6b1f510331cf2960c0375d48bc",
-    "hash": "db1e58ac900291460b5cc222f7e6a0af17b196e51065e7ac314f674dc508ebea"
-  },
-  {
-    "index": 7,
-    "timestamp": "2025-11-22T19:49:35.064756",
-    "data": {
-      "type": "ANALYSIS_RESULT",
-      "timestamp": "2025-11-22T19:49:35.062717",
-      "health_score": 80,
-      "triage": "Green",
-      "features_hash": "e3142d5615f79908d0d2418f4cf9ff56"
-    },
-    "prev_hash": "db1e58ac900291460b5cc222f7e6a0af17b196e51065e7ac314f674dc508ebea",
-    "hash": "9f095497cca4e986c76b1db7af4f2c5741a48f4ec0f20fe18e840976a24c94d7"
-  },
-  {
-    "index": 8,
-    "timestamp": "2025-11-22T19:56:48.541855",
-    "data": {
-      "type": "ANALYSIS_RESULT",
-      "timestamp": "2025-11-22T19:56:48.540855",
-      "health_score": 80,
-      "triage": "Green",
-      "features_hash": "e3142d5615f79908d0d2418f4cf9ff56"
-    },
-    "prev_hash": "9f095497cca4e986c76b1db7af4f2c5741a48f4ec0f20fe18e840976a24c94d7",
-    "hash": "3c6663a515dd3d7e3953f414da5aa7835ba5041d14ac47d77ded1bf77c98f69f"
-  },
-  {
-    "index": 9,
-    "timestamp": "2025-11-22T20:00:42.095678",
-    "data": {
-      "type": "ANALYSIS_RESULT",
-      "timestamp": "2025-11-22T20:00:42.090129",
-      "health_score": 80,
-      "triage": "Green",
-      "features_hash": "e3142d5615f79908d0d2418f4cf9ff56"
-    },
-    "prev_hash": "3c6663a515dd3d7e3953f414da5aa7835ba5041d14ac47d77ded1bf77c98f69f",
-    "hash": "5bd7bc5d9beaacd99f11059e5eb44c207459ec8e0384951121f78d2f0a70baee"
+    "hash": "49bea7a00e6a52879542722fc48ecc21dff43c42472027e5428bbaa1253377e4"
   }
 ]
