@@ -14,7 +14,7 @@ import pandas as pd
 from sqlmodel import Session, select
 from passlib.context import CryptContext
 
-CATBOOST_MODEL_PATH = r"server\mediguard_catboost_scaled (1).pkl"
+CATBOOST_MODEL_PATH = r"server\mediguard_catboost.pkl"
 catboost_model = joblib.load(CATBOOST_MODEL_PATH)
 
 LABEL_MAP = {0: 'Anemia', 1: 'Diabetes', 2: 'Healthy', 3: 'Thalasse', 4: 'Thromboc'}
