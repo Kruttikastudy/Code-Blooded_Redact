@@ -228,30 +228,30 @@ def analyze_symptoms(request: AnalysisRequest, session: Session = Depends(get_se
         ]
 
         feature_key_map = {
-            'Glucose': 'glucose',
-            'Cholesterol': 'cholesterol',
-            'Hemoglobin': 'hemoglobin',
-            'Platelets': 'platelets',
-            'White Blood Cells': 'white_blood_cells',
-            'Red Blood Cells': 'red_blood_cells',
-            'Hematocrit': 'hematocrit',
-            'Mean Corpuscular Volume': 'mean_corpuscular_volume',
-            'Mean Corpuscular Hemoglobin': 'mean_corpuscular_hemoglobin',
-            'Mean Corpuscular Hemoglobin Concentration': 'mean_corpuscular_hemoglobin_concentration',
-            'Insulin': 'insulin',
-            'BMI': 'bmi',
-            'Systolic Blood Pressure': 'blood_pressure_systolic',
-            'Diastolic Blood Pressure': 'blood_pressure_diastolic',
-            'Triglycerides': 'triglycerides',
-            'HbA1c': 'hba1c',
-            'LDL Cholesterol': 'ldl_cholesterol',
-            'HDL Cholesterol': 'hdl_cholesterol',
-            'ALT': 'alt',
-            'AST': 'ast',
-            'Heart Rate': 'heart_rate',
-            'Creatinine': 'creatinine',
-            'Troponin': 'troponin',
-            'C-reactive Protein': 'c_reactive_protein'
+            'Glucose': 'Glucose',
+            'Cholesterol': 'Cholesterol',
+            'Hemoglobin': 'Hemoglobin',
+            'Platelets': 'Platelets',
+            'White Blood Cells': 'White Blood Cells',
+            'Red Blood Cells': 'Red Blood Cells',
+            'Hematocrit': 'Hematocrit',
+            'Mean Corpuscular Volume': 'Mean Corpuscular Volume',
+            'Mean Corpuscular Hemoglobin': 'Mean Corpuscular Hemoglobin',
+            'Mean Corpuscular Hemoglobin Concentration': 'Mean Corpuscular Hemoglobin Concentration',
+            'Insulin': 'Insulin',
+            'BMI': 'BMI',
+            'Systolic Blood Pressure': 'Systolic Blood Pressure',
+            'Diastolic Blood Pressure': 'Diastolic Blood Pressure',
+            'Triglycerides': 'Triglycerides',
+            'HbA1c': 'HbA1c',
+            'LDL Cholesterol': 'LDL Cholesterol',
+            'HDL Cholesterol': 'HDL Cholesterol',
+            'ALT': 'ALT',
+            'AST': 'AST',
+            'Heart Rate': 'Heart Rate',
+            'Creatinine': 'Creatinine',
+            'Troponin': 'Troponin',
+            'C-reactive Protein': 'C-reactive Protein'
         }
 
         # Build a single-row DataFrame
@@ -301,8 +301,9 @@ def analyze_symptoms(request: AnalysisRequest, session: Session = Depends(get_se
         # --- Step 6: Save to Database ---
         db_report = PatientReport(
             patient_name=clean_features.get("name"),
-            age=clean_features.get("age"),
-            sex=clean_features.get("sex"),
+            patient_name=clean_features.get("name"),
+            # age and sex removed from input
+
             health_score=health_score,
             triage_category=triage_category,
             raw_text=request.text[:500],  # Store first 500 chars

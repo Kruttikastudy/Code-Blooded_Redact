@@ -26,20 +26,19 @@ logging.basicConfig(level=logging.INFO)
 
 # Canonical 24 features
 CANONICAL_FEATURES = [
-    "age", "sex", "bmi", "glucose", "blood_pressure_systolic",
-    "blood_pressure_diastolic", "cholesterol_total", "ldl_cholesterol",
-    "hdl_cholesterol", "triglycerides", "hemoglobin", "platelets",
-    "white_blood_cells", "red_blood_cells", "hematocrit",
-    "mean_corpuscular_volume", "mean_corpuscular_hemoglobin",
-    "mean_corpuscular_hemoglobin_concentration", "hba1c", "troponin",
-    "alt", "ast", "creatinine", "c_reactive_protein",
+    "glucose", "cholesterol", "hemoglobin", "platelets", "white_blood_cells",
+    "red_blood_cells", "hematocrit", "mean_corpuscular_volume",
+    "mean_corpuscular_hemoglobin", "mean_corpuscular_hemoglobin_concentration",
+    "insulin", "bmi", "systolic_blood_pressure", "diastolic_blood_pressure",
+    "triglycerides", "hba1c", "ldl_cholesterol", "hdl_cholesterol",
+    "alt", "ast", "heart_rate", "creatinine", "troponin", "c_reactive_protein",
 ]
 
 # Physiological ranges
 PHYSIO_RANGES: Dict[str, Tuple[float, float]] = {
-    "age": (0, 120), "bmi": (8, 80), "glucose": (30, 1000),
-    "blood_pressure_systolic": (50, 300), "blood_pressure_diastolic": (30, 200),
-    "cholesterol_total": (50, 1000), "ldl_cholesterol": (10, 1000),
+    "bmi": (8, 80), "glucose": (30, 1000),
+    "systolic_blood_pressure": (50, 300), "diastolic_blood_pressure": (30, 200),
+    "cholesterol": (50, 1000), "ldl_cholesterol": (10, 1000),
     "hdl_cholesterol": (5, 200), "triglycerides": (5, 2000),
     "hemoglobin": (3, 25), "platelets": (1e3, 5e6),
     "white_blood_cells": (0.1, 200), "red_blood_cells": (0.5, 10),
@@ -49,13 +48,14 @@ PHYSIO_RANGES: Dict[str, Tuple[float, float]] = {
     "hba1c": (3.0, 25.0), "troponin": (0.0, 100.0),
     "alt": (1, 2000), "ast": (1, 2000),
     "creatinine": (0.01, 50), "c_reactive_protein": (0.0, 500.0),
+    "insulin": (0, 1000), "heart_rate": (30, 250),
 }
 
 # Dataset ranges (narrower)
 DATASET_RANGES: Dict[str, Tuple[float, float]] = {
-    "age": (1, 100), "bmi": (12, 55), "glucose": (60, 400),
-    "blood_pressure_systolic": (80, 220), "blood_pressure_diastolic": (40, 140),
-    "cholesterol_total": (100, 400), "ldl_cholesterol": (20, 300),
+    "bmi": (12, 55), "glucose": (60, 400),
+    "systolic_blood_pressure": (80, 220), "diastolic_blood_pressure": (40, 140),
+    "cholesterol": (100, 400), "ldl_cholesterol": (20, 300),
     "hdl_cholesterol": (20, 120), "triglycerides": (20, 800),
     "hemoglobin": (6, 20), "platelets": (5e3, 1e6),
     "white_blood_cells": (1.0, 50.0), "red_blood_cells": (2.5, 7.5),
@@ -65,6 +65,7 @@ DATASET_RANGES: Dict[str, Tuple[float, float]] = {
     "hba1c": (4.0, 15.0), "troponin": (0.0, 2.0),
     "alt": (5, 300), "ast": (5, 300),
     "creatinine": (0.2, 10), "c_reactive_protein": (0.0, 200.0),
+    "insulin": (2, 50), "heart_rate": (40, 120),
 }
 
 def _to_number(value: Any) -> Optional[float]:
@@ -118,14 +119,7 @@ class DataQualityAgent:
                 missing_fields.append(feat)
                 continue
 
-            # Sex
-            if feat == "sex":
-                if isinstance(raw_val, str):
-                    sval = raw_val.strip().lower()
-                    if sval in ("m", "male", "man"): clean_features[feat] = "male"
-                    elif sval in ("f", "female", "woman"): clean_features[feat] = "female"
-                    else: clean_features[feat] = sval
-                continue
+
 
             # Not numeric
             if num is None:
@@ -179,5 +173,5 @@ class DataQualityAgent:
 
 if __name__ == "__main__":
     agent = DataQualityAgent()
-    sample = {"bmi": 120, "glucose": 160, "age": 54, "sex": "female"}
+    sample = {"bmi": 22, "glucose": 160, "systolic_blood_pressure": 120}
     print(json.dumps(agent.validate(sample), indent=2))
