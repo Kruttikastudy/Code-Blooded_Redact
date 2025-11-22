@@ -68,12 +68,14 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
                     router.push('/dashboard');
                 }, 1500);
             } else {
-                // Call login API
-                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password })
-                });
+    console.log("API URL:", process.env.NEXT_PUBLIC_API_URL);
+
+    // Call login API
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+    });
 
                 const data = await response.json();
 
