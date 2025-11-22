@@ -14,7 +14,7 @@ import pandas as pd
 from sqlmodel import Session, select
 from passlib.context import CryptContext
 
-CATBOOST_MODEL_PATH = r"C:\Users\ketak\OneDrive\Desktop\Projects\Code-Blooded_Redact\mediguard_catboost_scaled (1).pkl"
+CATBOOST_MODEL_PATH = r"C:\Users\naikb\OneDrive\Desktop\Projects\MediGuard\Code-Blooded_Redact\mediguard_catboost_scaled (1).pkl"
 catboost_model = joblib.load(CATBOOST_MODEL_PATH)
 
 LABEL_MAP = {0: 'Anemia', 1: 'Diabetes', 2: 'Healthy', 3: 'Thalasse', 4: 'Thromboc'}
@@ -300,7 +300,6 @@ def analyze_symptoms(request: AnalysisRequest, session: Session = Depends(get_se
         
         # --- Step 6: Save to Database ---
         db_report = PatientReport(
-            patient_name=clean_features.get("name"),
             patient_name=clean_features.get("name"),
             # age and sex removed from input
 
