@@ -51,20 +51,20 @@ export default function Dashboard() {
             chart: 'M0,20 L10,22 L20,18 L30,21 L40,20'
         },
         {
-            label: 'Temperature',
-            value: '98.6',
-            unit: '°F',
+            label: 'Glucose',
+            value: '95',
+            unit: 'mg/dL',
             icon: Thermometer,
             color: 'text-amber-500',
             bg: 'bg-amber-50',
-            trend: '-0.1%',
+            trend: '-2%',
             trendUp: false,
             chart: 'M0,20 L40,20'
         },
         {
-            label: 'SpO2',
-            value: '98',
-            unit: '%',
+            label: 'Cholesterol',
+            value: '180',
+            unit: 'mg/dL',
             icon: Wind,
             color: 'text-emerald-500',
             bg: 'bg-emerald-50',

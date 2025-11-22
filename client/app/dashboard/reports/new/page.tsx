@@ -87,12 +87,12 @@ export default function AddReportPage() {
     };
 
     const vitalsList = [
-        "Heart Rate (bpm)", "Blood Pressure (mmHg)", "Temperature (°F)", "SpO2 (%)",
-        "Resp. Rate (bpm)", "BMI", "Glucose Fasting (mg/dL)", "Glucose PP (mg/dL)",
-        "HbA1c (%)", "Total Cholesterol", "LDL Cholesterol", "HDL Cholesterol",
-        "Triglycerides", "Hemoglobin (g/dL)", "WBC Count (K/uL)", "RBC Count (M/uL)",
-        "Platelets (K/uL)", "Hematocrit (%)", "ALT (U/L)", "AST (U/L)",
-        "Creatinine (mg/dL)", "BUN (mg/dL)", "Sodium (mEq/L)", "Potassium (mEq/L)"
+        "Glucose", "Cholesterol", "Hemoglobin", "Platelets",
+        "White Blood Cells", "Red Blood Cells", "Hematocrit", "Mean Corpuscular Volume",
+        "Mean Corpuscular Hemoglobin", "Mean Corpuscular Hemoglobin Concentration", "Insulin", "BMI",
+        "Systolic Blood Pressure", "Diastolic Blood Pressure", "Triglycerides", "HbA1c",
+        "LDL Cholesterol", "HDL Cholesterol", "ALT", "AST",
+        "Heart Rate", "Creatinine", "Troponin", "C-reactive Protein"
     ];
 
     return (

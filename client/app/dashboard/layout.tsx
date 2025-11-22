@@ -6,25 +6,39 @@ import {
     LogOut, Shield
 } from 'lucide-react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import { LanguageProvider, useLanguage } from '@/contexts/LanguageContext';
 
-export default function DashboardLayout({
+function DashboardLayoutContent({
     children,
 }: {
     children: React.ReactNode;
 }) {
     const pathname = usePathname();
+    const router = useRouter();
+    const { t } = useLanguage();
 
     const navItems = [
-        { icon: LayoutDashboard, label: 'Overview', href: '/dashboard' },
-        { icon: FilePlus, label: 'Add Report', href: '/dashboard/reports/new' },
-        { icon: ClipboardList, label: 'Action Plan', href: '/dashboard/plan' },
-        { icon: Stethoscope, label: 'Contact Doctors', href: '/dashboard/doctors' },
-        { icon: Trophy, label: 'Community Challenges', href: '/dashboard/community' },
-        { icon: Smartphone, label: 'Connect Devices', href: '/dashboard/devices' },
-        { icon: Settings, label: 'Settings', href: '/dashboard/settings' },
+        { icon: LayoutDashboard, label: t('nav.overview'), href: '/dashboard' },
+        { icon: FilePlus, label: t('nav.addReport'), href: '/dashboard/reports/new' },
+        { icon: ClipboardList, label: t('nav.actionPlan'), href: '/dashboard/plan' },
+        { icon: Stethoscope, label: t('nav.contactDoctors'), href: '/dashboard/doctors' },
+        { icon: Trophy, label: t('nav.communityChallenges'), href: '/dashboard/community' },
+        { icon: Smartphone, label: t('nav.connectDevices'), href: '/dashboard/devices' },
+        { icon: Settings, label: t('nav.settings'), href: '/dashboard/settings' },
     ];
+
+    const handleSignOut = () => {
+        // Clear user data from localStorage
+        localStorage.removeItem('user');
+
+        // Set a flag for the landing page to show the toast
+        localStorage.setItem('signOutSuccess', 'true');
+
+        // Redirect to landing page
+        router.push('/');
+    };
 
     return (
         <div className="flex h-screen bg-slate-50">
@@ -69,9 +83,12 @@ export default function DashboardLayout({
                 </nav>
 
                 <div className="p-4 border-t border-slate-100">
-                    <button className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-sm text-slate-500 hover:bg-red-50 hover:text-red-600 transition-colors">
+                    <button
+                        onClick={handleSignOut}
+                        className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-sm text-slate-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+                    >
                         <LogOut size={20} />
-                        Sign Out
+                        {t('nav.signOut')}
                     </button>
                 </div>
             </aside>
@@ -81,5 +98,19 @@ export default function DashboardLayout({
                 {children}
             </main>
         </div>
+    );
+}
+
+export default function DashboardLayout({
+    children,
+}: {
+    children: React.ReactNode;
+}) {
+    return (
+        <LanguageProvider>
+            <DashboardLayoutContent>
+                {children}
+            </DashboardLayoutContent>
+        </LanguageProvider>
     );
 }

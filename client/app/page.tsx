@@ -1,16 +1,35 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { NeonButton } from '@/components/ui/NeonButton';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { LoginModal } from '@/components/LoginModal';
+import { Toast } from '@/components/ui/Toast';
 import { ArrowRight, Activity, Shield, Zap, Brain } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function Home() {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+
+  useEffect(() => {
+    // Check if user just signed out
+    const signOutSuccess = localStorage.getItem('signOutSuccess');
+    if (signOutSuccess === 'true') {
+      setToastMessage('Signed out successfully!');
+      setShowToast(true);
+      localStorage.removeItem('signOutSuccess');
+    }
+  }, []);
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-blue-100">
+      <Toast
+        message={toastMessage}
+        isVisible={showToast}
+        onClose={() => setShowToast(false)}
+      />
       {/* Navbar */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200">
         <div className="container mx-auto px-6 py-4 flex justify-between items-center">
