@@ -43,7 +43,7 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
                 }
 
                 // Call signup API
-                const response = await fetch(`${process.env.REACT_APP_API_URL}/api/auth/signup`, {
+                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/signup`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ name, email, password })
@@ -69,7 +69,7 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
                 }, 1500);
             } else {
                 // Call login API
-                const response = await fetch(`${process.env.REACT_APP_API_URL}/api/auth/login`, {
+                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password })

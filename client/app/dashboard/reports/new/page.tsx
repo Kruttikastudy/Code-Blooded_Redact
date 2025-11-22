@@ -74,7 +74,7 @@ export default function AddReportPage() {
         }, 1500);
 
         try {
-            const response = await fetch(`${process.env.REACT_APP_API_URL}/analyze`, {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/analyze`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
