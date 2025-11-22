@@ -19,4 +19,5 @@ pdfplumber
 # Optional / Legacy (Keep if needed for future ML)
 numpy
 pandas
-
+joblib
+scikit-learn
