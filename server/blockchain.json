@@ -113,5 +113,18 @@
     },
     "prev_hash": "3c6663a515dd3d7e3953f414da5aa7835ba5041d14ac47d77ded1bf77c98f69f",
     "hash": "5bd7bc5d9beaacd99f11059e5eb44c207459ec8e0384951121f78d2f0a70baee"
+  },
+  {
+    "index": 10,
+    "timestamp": "2025-11-22T20:40:39.259446",
+    "data": {
+      "type": "ANALYSIS_RESULT",
+      "timestamp": "2025-11-22T20:40:39.253446",
+      "health_score": 81,
+      "triage": "Green",
+      "features_hash": "8fa16b239abc4c76e23cd48dde5a1125"
+    },
+    "prev_hash": "5bd7bc5d9beaacd99f11059e5eb44c207459ec8e0384951121f78d2f0a70baee",
+    "hash": "403e1374527506d34ef50fb22d3e88b3e093b640143c0fee9e0abbd8a76ea896"
   }
 ]
