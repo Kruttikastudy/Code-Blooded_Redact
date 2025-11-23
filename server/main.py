@@ -15,7 +15,8 @@ import pandas as pd
 from sqlmodel import Session, select
 from passlib.context import CryptContext
 
-CATBOOST_MODEL_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "mediguard_catboost_scaled (1).pkl")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+CATBOOST_MODEL_PATH = os.path.join(BASE_DIR, "mediguard_catboost.pkl")
 catboost_model = joblib.load(CATBOOST_MODEL_PATH)
 
 LABEL_MAP = {0: 'Thalasse', 1: 'Diabetes', 2: 'Anemia', 3: 'Thromboc', 4: 'Healthy'}
@@ -190,14 +191,41 @@ def analyze_symptoms(request: AnalysisRequest, session: Session = Depends(get_se
         unified_data = intake_agent.unify_features(extraction_result)
         raw_features = unified_data["features"]
         
+        logger.info(f"Received text from frontend: {request.text[:500]}")
+        logger.info(f"Raw extracted features: {raw_features}")
+        
+        # KEY MAPPING FIX: Translate IntakeExtractionAgent keys to DataQualityAgent keys
+        key_mapping = {
+            "blood_pressure_systolic": "systolic_blood_pressure",
+            "blood_pressure_diastolic": "diastolic_blood_pressure",
+            "cholesterol_total": "cholesterol",
+            "age": None,  # Remove age and sex as they're not in the model
+            "sex": None
+        }
+        
+        mapped_features = {}
+        for key, value in raw_features.items():
+            if key in key_mapping:
+                new_key = key_mapping[key]
+                if new_key is not None:  # Skip None mappings (age, sex)
+                    mapped_features[new_key] = value
+            else:
+                mapped_features[key] = value
+        
+        logger.info(f"Mapped features: {mapped_features}")
+        
         # --- Step 2: Data Quality & Validation (Agent 2) ---
-        validation_result = quality_agent.validate(raw_features)
+        validation_result = quality_agent.validate(mapped_features)
         clean_features = validation_result["clean_features"]
         quality_report = validation_result["data_quality_report"]
+        
+        logger.info(f"Clean features: {clean_features}")
         
         # --- Step 3: Scaling Bridge (Agent 3) ---
         scaling_result = scaling_bridge.scale_features(clean_features)
         scaled_features = scaling_result["scaled_features"]
+        
+        logger.info(f"Scaled features: {scaled_features}")
         
         # --- Step 4: Mock ML Prediction (Placeholder for real model) ---
         # Calculate a simple health score based on scaled features

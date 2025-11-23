@@ -1,0 +1,18 @@
+[
+  {
+    "index": 1,
+    "timestamp": "2025-11-23T06:12:21.699083",
+    "data": {
+      "type": "ANALYSIS_RESULT",
+      "timestamp": "2025-11-23T06:12:21.699083",
+      "health_score": 41,
+      "triage": "Red",
+      "features_hash": "0ed10ff2a400414915ee64bdc246defa"
+    },
+    "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+    "merkle_root": "{\"alt\": null, \"ast\": null, \"bmi\": 30.0, \"c_reactive_protein\": null, \"cholesterol\": null, \"creatinine\": null, \"diastolic_blood_pressure\": null, \"glucose\": 140.0, \"hba1c\": null, \"hdl_cholesterol\": null, \"heart_rate\": null, \"hematocrit\": null, \"hemoglobin\": null, \"insulin\": null, \"ldl_cholesterol\": null, \"mean_corpuscular_hemoglobin\": null, \"mean_corpuscular_hemoglobin_concentration\": null, \"mean_corpuscular_volume\": null, \"platelets\": null, \"red_blood_cells\": null, \"systolic_blood_pressure\": null, \"triglycerides\": null, \"troponin\": null, \"white_blood_cells\": null}",
+    "rsa_signature": "AAOlEEObKysW/mTvYEbhp0Y+e+WPQhyOddoF9s1FwomCmDFPjm6S4fCUqyzGbpdQa99EZZTr4WSGBnaOwr7B8gh8LzqfIYKFrdhJ72c8IzkodXYpgeN5Sr2lcY7ejLsLcM1cXzd0QdfRRkASrrs8YJztK9RowdfGW7s20FvjTpYt95Id6Kioim+J/SxA0d+49qLmpKFKr5eoMG3wGQFrI88ijR0/1OxO2JePvF/aouIT6g/hFIocAFe3ZegoRSURn/57zKnIddrGN8lFVosH4eAPn+v0tBB3Sb/JisbFGLC7UD/8H39S86u1OPAjyYgbpnbxYyxNuD5r+Ya7P+gFobNWWf55dt7KeOfdW0X//9iRcYHC+LcnFYB26H7kC7SODQyQ+JvykJ75/bycu3VfadZeBBi+Iyhwa8gvXhrh9hZ6AMLeUc0GA9HQSsD32lb989myrDgyhm5+Lv2HICisEmSPx31uIIGt85cKBLN2UkZX9mtGdsNiBo8bcSGpM8SrY0YXFxhjEQEVaUug8HqhDJCzrLJP5KDSfLvhKkFsceJv4mft2mFkFCkiBqezFECWmkUOa/Oo7gowib2dPcNIdrDqenY6KuP645MUzfc9sVlFvyeFAJywUbuC51MuH8907daupKS2IHuSuIgrJFUQvhwJe0jCRXiZb2lWcKCeaCg=",
+    "hash": "4e23ea56d969f5ccf903dd21fb7fc58693ea08fe3c479f12a82adcd54ec392b8",
+    "is_valid": true
+  }
+]
