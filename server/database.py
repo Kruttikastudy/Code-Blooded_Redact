@@ -20,9 +20,18 @@ if not DATABASE_URL:
 # Create engine
 engine = create_engine(DATABASE_URL, echo=False, pool_pre_ping=True, pool_recycle=1800)
 
+def drop_all_tables():
+    """Drop all tables - use with caution!"""
+    SQLModel.metadata.drop_all(engine)
+
 def create_db_and_tables():
     """Create all tables defined in models.py"""
     SQLModel.metadata.create_all(engine)
+
+def reset_database():
+    """Drop and recreate all tables - use for schema migrations"""
+    drop_all_tables()
+    create_db_and_tables()
 
 def get_session():
     """Dependency for FastAPI to get a database session."""

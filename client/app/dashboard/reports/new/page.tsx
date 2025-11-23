@@ -60,16 +60,22 @@ export default function AddReportPage() {
         }));
     };
 
+    const [pdfFile, setPdfFile] = useState<File | null>(null);
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            setPdfFile(e.target.files[0]);
+        }
+    };
+
     const handleAnalyze = async () => {
+        if (activeTab === 'upload' && !pdfFile) {
+            alert("Please select a PDF file first.");
+            return;
+        }
+
         setIsAnalyzing(true);
         setAnalysisStep(0);
-
-        // Construct text payload from form data
-        let textPayload = `Patient Name: ${formData.name}, Age: ${formData.age}, Gender: ${formData.gender}, Date: ${formData.date}. \n`;
-        textPayload += `Observations: ${formData.observations} \n`;
-        Object.entries(formData.vitals).forEach(([key, value]) => {
-            if (value) textPayload += `${key}: ${value}, `;
-        });
 
         // Simulate steps visually while fetching
         const stepInterval = setInterval(() => {
@@ -77,13 +83,54 @@ export default function AddReportPage() {
         }, 1500);
 
         try {
+            let body;
+            let headers = {};
+
+            if (activeTab === 'manual') {
+                // Construct text payload from form data
+                let textPayload = `Patient Name: ${formData.name}, Age: ${formData.age}, Gender: ${formData.gender}, Date: ${formData.date}. \n`;
+                textPayload += `Observations: ${formData.observations} \n`;
+                Object.entries(formData.vitals).forEach(([key, value]) => {
+                    if (value) textPayload += `${key}: ${value}, `;
+                });
+
+                const formDataObj = new FormData();
+                formDataObj.append('text', textPayload);
+                formDataObj.append('mode', 'text');
+
+                // Add patient_id if available
+                const userStr = localStorage.getItem('user');
+                if (userStr) {
+                    const user = JSON.parse(userStr);
+                    if (user.patient_id) {
+                        formDataObj.append('patient_id', user.patient_id);
+                    }
+                }
+
+                body = formDataObj;
+                // Content-Type header is automatically set by browser for FormData
+            } else {
+                const formDataObj = new FormData();
+                if (pdfFile) {
+                    formDataObj.append('file', pdfFile);
+                }
+                formDataObj.append('mode', 'pdf');
+
+                // Add patient_id if available
+                const userStr = localStorage.getItem('user');
+                if (userStr) {
+                    const user = JSON.parse(userStr);
+                    if (user.patient_id) {
+                        formDataObj.append('patient_id', user.patient_id);
+                    }
+                }
+
+                body = formDataObj;
+            }
+
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/analyze`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    text: textPayload,
-                    mode: activeTab === 'manual' ? 'text' : 'pdf'
-                })
+                body: body
             });
 
             if (!response.ok) {
@@ -417,86 +464,134 @@ export default function AddReportPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Left Column: Form */}
                     <div className="lg:col-span-2 space-y-6">
-                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                            <h2 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
-                                <User size={20} className="text-blue-600" /> Patient Demographics
-                            </h2>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Full Name</label>
-                                    <input
-                                        type="text"
-                                        value={formData.name}
-                                        onChange={(e) => handleInputChange('name', e.target.value)}
-                                        className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
-                                        placeholder="John Doe"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Age</label>
-                                    <input
-                                        type="number"
-                                        value={formData.age}
-                                        onChange={(e) => handleInputChange('age', e.target.value)}
-                                        className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
-                                        placeholder="45"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Gender</label>
-                                    <select
-                                        value={formData.gender}
-                                        onChange={(e) => handleInputChange('gender', e.target.value)}
-                                        className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all bg-white"
-                                    >
-                                        <option>Male</option>
-                                        <option>Female</option>
-                                        <option>Other</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Date</label>
-                                    <input
-                                        type="date"
-                                        value={formData.date}
-                                        onChange={(e) => handleInputChange('date', e.target.value)}
-                                        className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                            <h2 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
-                                <Activity size={20} className="text-blue-600" /> Vitals & Markers
-                            </h2>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {vitalsList.map((vital, index) => (
-                                    <div key={index}>
-                                        <label className="block text-xs font-medium text-slate-500 mb-1 uppercase tracking-wider">{vital}</label>
-                                        <input
-                                            type="text"
-                                            value={formData.vitals[vital] || ''}
-                                            onChange={(e) => handleVitalChange(vital, e.target.value)}
-                                            className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
-                                            placeholder="--"
-                                        />
+                        {activeTab === 'manual' ? (
+                            <>
+                                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                                    <h2 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                                        <User size={20} className="text-blue-600" /> Patient Demographics
+                                    </h2>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 mb-1">Full Name</label>
+                                            <input
+                                                type="text"
+                                                value={formData.name}
+                                                onChange={(e) => handleInputChange('name', e.target.value)}
+                                                className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                                                placeholder="John Doe"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 mb-1">Age</label>
+                                            <input
+                                                type="number"
+                                                value={formData.age}
+                                                onChange={(e) => handleInputChange('age', e.target.value)}
+                                                className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                                                placeholder="45"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 mb-1">Gender</label>
+                                            <select
+                                                value={formData.gender}
+                                                onChange={(e) => handleInputChange('gender', e.target.value)}
+                                                className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all bg-white"
+                                            >
+                                                <option>Male</option>
+                                                <option>Female</option>
+                                                <option>Other</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 mb-1">Date</label>
+                                            <input
+                                                type="date"
+                                                value={formData.date}
+                                                onChange={(e) => handleInputChange('date', e.target.value)}
+                                                className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                                            />
+                                        </div>
                                     </div>
-                                ))}
-                            </div>
-                        </div>
+                                </div>
 
-                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                            <h2 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
-                                <FileText size={20} className="text-blue-600" /> Clinical Notes
-                            </h2>
-                            <textarea
-                                value={formData.observations}
-                                onChange={(e) => handleInputChange('observations', e.target.value)}
-                                className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all h-32 resize-none"
-                                placeholder="Enter any additional observations, symptoms, or patient history..."
-                            />
-                        </div>
+                                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                                    <h2 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                                        <Activity size={20} className="text-blue-600" /> Vitals & Markers
+                                    </h2>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {vitalsList.map((vital, index) => (
+                                            <div key={index}>
+                                                <label className="block text-xs font-medium text-slate-500 mb-1 uppercase tracking-wider">{vital}</label>
+                                                <input
+                                                    type="text"
+                                                    value={formData.vitals[vital] || ''}
+                                                    onChange={(e) => handleVitalChange(vital, e.target.value)}
+                                                    className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                                                    placeholder="--"
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                                    <h2 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                                        <FileText size={20} className="text-blue-600" /> Clinical Notes
+                                    </h2>
+                                    <textarea
+                                        value={formData.observations}
+                                        onChange={(e) => handleInputChange('observations', e.target.value)}
+                                        className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all h-32 resize-none"
+                                        placeholder="Enter any additional observations, symptoms, or patient history..."
+                                    />
+                                </div>
+                            </>
+                        ) : (
+                            <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 text-center py-16">
+                                <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                                    <Upload size={32} className="text-blue-600" />
+                                </div>
+                                <h3 className="text-xl font-bold text-slate-900 mb-2">Upload Medical Report</h3>
+                                <p className="text-slate-500 mb-8 max-w-md mx-auto">
+                                    Upload a PDF of your lab report. Our AI will automatically extract vitals and analyze your health status.
+                                </p>
+
+                                <div className="max-w-md mx-auto">
+                                    <label className="block w-full cursor-pointer group">
+                                        <input
+                                            type="file"
+                                            accept=".pdf"
+                                            onChange={handleFileChange}
+                                            className="hidden"
+                                        />
+                                        <div className={`border-2 border-dashed rounded-xl p-8 transition-all ${pdfFile
+                                                ? 'border-emerald-400 bg-emerald-50'
+                                                : 'border-slate-300 hover:border-blue-400 hover:bg-blue-50'
+                                            }`}>
+                                            {pdfFile ? (
+                                                <div className="flex items-center justify-center gap-3 text-emerald-700">
+                                                    <CheckCircle2 size={24} />
+                                                    <span className="font-medium">{pdfFile.name}</span>
+                                                </div>
+                                            ) : (
+                                                <div className="text-slate-600 group-hover:text-blue-600">
+                                                    <span className="font-medium">Click to browse</span> or drag file here
+                                                </div>
+                                            )}
+                                        </div>
+                                    </label>
+                                    {pdfFile && (
+                                        <button
+                                            onClick={() => setPdfFile(null)}
+                                            className="mt-4 text-sm text-red-500 hover:text-red-600 font-medium"
+                                        >
+                                            Remove file
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        )}
 
                         <NeonButton
                             variant="blue"

@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, File, UploadFile, Form
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional, Dict, Any
@@ -13,6 +13,7 @@ from scipy.special import expit
 import pandas as pd
 from sqlmodel import Session, select
 from passlib.context import CryptContext
+import bcrypt
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CATBOOST_MODEL_PATH = os.path.join(BASE_DIR, "mediguard_catboost.pkl")
@@ -95,6 +96,7 @@ class AnalysisRequest(BaseModel):
     text: str
     file_name: Optional[str] = None
     mode: Optional[str] = "text" # 'text' or 'pdf'
+    patient_id: Optional[str] = None
 
 class PredictionRequest(BaseModel):
     features: Dict[str, Any]
@@ -124,15 +126,16 @@ def signup(request: SignupRequest, session: Session = Depends(get_session)):
         if existing_user:
             raise HTTPException(status_code=400, detail="Email already registered")
         
-        # Hash password (bcrypt has 72 byte limit, so truncate if needed)
-        truncated_password = request.password[:72]
-        hashed_password = pwd_context.hash(truncated_password)
+        # Hash password using bcrypt directly
+        salt = bcrypt.gensalt()
+        hashed_password_bytes = bcrypt.hashpw(request.password.encode('utf-8'), salt)
+        hashed_password = hashed_password_bytes.decode('utf-8') # Store as string
         
         # Create new user in database
         new_user = User(
             name=request.name,
             email=request.email,
-            hashed_password=hashed_password
+            password_hash=hashed_password
         )
         session.add(new_user)
         session.commit()
@@ -145,6 +148,7 @@ def signup(request: SignupRequest, session: Session = Depends(get_session)):
             "message": "Account created successfully",
             "user": {
                 "id": new_user.id,
+                "patient_id": new_user.patient_id,
                 "name": new_user.name,
                 "email": new_user.email
             }
@@ -167,8 +171,8 @@ def login(request: LoginRequest, session: Session = Depends(get_session)):
         if not user:
             raise HTTPException(status_code=401, detail="Invalid email or password")
         
-        # Verify password
-        if not pwd_context.verify(request.password, user.hashed_password):
+        # Verify password using bcrypt directly
+        if not bcrypt.checkpw(request.password.encode('utf-8'), user.password_hash.encode('utf-8')):
             raise HTTPException(status_code=401, detail="Invalid email or password")
         
         logger.info(f"Login successful for user: {user.id}")
@@ -178,10 +182,12 @@ def login(request: LoginRequest, session: Session = Depends(get_session)):
             "message": "Login successful",
             "user": {
                 "id": user.id,
+                "patient_id": user.patient_id,
                 "name": user.name,
                 "email": user.email
             }
         }
+
     except HTTPException:
         raise
     except Exception as e:
@@ -189,22 +195,39 @@ def login(request: LoginRequest, session: Session = Depends(get_session)):
         raise HTTPException(status_code=500, detail="Login failed")
 
 @app.post("/api/analyze")
-def analyze_symptoms(request: AnalysisRequest, session: Session = Depends(get_session)):
-    logger.info(f"Received analysis request. Mode: {request.mode}")
+async def analyze_symptoms(
+    text: Optional[str] = Form(None),
+    file: Optional[UploadFile] = File(None),
+    mode: str = Form("text"),
+    patient_id: Optional[str] = Form(None),
+    session: Session = Depends(get_session)
+):
+    logger.info(f"Received analysis request. Mode: {mode}")
     
     try:
         # --- Step 1: Intake & Extraction (Agent 1) ---
-        if request.mode == "pdf" and request.file_name:
-            # In a real app, we'd handle file upload. Here we assume text is passed or path is known.
-            # For this demo, we'll treat 'text' as the raw content extracted on client or passed directly.
-            extraction_result = intake_agent.extract_from_text(request.text)
+        if mode == "pdf" and file:
+            # Save uploaded file temporarily
+            file_location = f"temp_{file.filename}"
+            with open(file_location, "wb+") as file_object:
+                file_object.write(await file.read())
+            
+            try:
+                extraction_result = intake_agent.extract_from_pdf(file_location)
+                # Clean up temp file
+                os.remove(file_location)
+            except Exception as e:
+                if os.path.exists(file_location):
+                    os.remove(file_location)
+                raise e
+        elif text:
+            extraction_result = intake_agent.extract_from_text(text)
         else:
-            extraction_result = intake_agent.extract_from_text(request.text)
+             raise HTTPException(status_code=400, detail="No text or file provided")
             
         unified_data = intake_agent.unify_features(extraction_result)
         raw_features = unified_data["features"]
         
-        logger.info(f"Received text from frontend: {request.text[:500]}")
         logger.info(f"Raw extracted features: {raw_features}")
         
         # KEY MAPPING FIX: Translate IntakeExtractionAgent keys to DataQualityAgent keys
@@ -328,13 +351,14 @@ def analyze_symptoms(request: AnalysisRequest, session: Session = Depends(get_se
         
         # --- Step 6: Save to Database ---
         db_report = PatientReport(
+            patient_id=patient_id,
             patient_name=clean_features.get("name"),
             # age and sex removed from input
 
             health_score=health_score,
             triage_category=triage_category,
             predictions_json=json.dumps(predictions),  # Save disease predictions
-            raw_text=request.text[:500],  # Store first 500 chars
+            raw_text=text[:500] if text else "PDF Upload",  # Store first 500 chars or PDF label
             features_json=json.dumps(clean_features),
             warnings_json=json.dumps(unified_data["warnings"] + quality_report["warnings"]),
             blockchain_hash=block["hash"]
@@ -445,30 +469,6 @@ def get_reports_stats(session: Session = Depends(get_session)):
         }
     except Exception as e:
         logger.error(f"Failed to calculate stats: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.get("/api/reports/{report_id}")
-def get_report(report_id: int, session: Session = Depends(get_session)):
-    """Fetch a single report by ID."""
-    logger.info(f"Fetching report {report_id}")
-    try:
-        report = session.get(PatientReport, report_id)
-        
-        if not report:
-            raise HTTPException(status_code=404, detail="Report not found")
-        
-        return {
-            "id": report.id,
-            "report_title": report.report_title or f"Report #{report.id}",
-            "patient_name": report.patient_name,
-            "health_score": report.health_score,
-            "triage_category": report.triage_category,
-            "predictions": json.loads(report.predictions_json) if report.predictions_json else {},
-            "features": json.loads(report.features_json) if report.features_json else {},
-            "warnings": json.loads(report.warnings_json) if report.warnings_json else [],
-            "created_at": report.created_at.isoformat(),
-            "blockchain_hash": report.blockchain_hash
-        }
     except HTTPException:
         raise
     except Exception as e:
@@ -498,6 +498,86 @@ def update_report(report_id: int, request: dict, session: Session = Depends(get_
         raise
     except Exception as e:
         logger.error(f"Failed to update report: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/reports")
+def get_reports(session: Session = Depends(get_session)):
+    """Fetch all reports, ordered by most recent first."""
+    logger.info("Fetching all reports")
+    try:
+        reports = session.exec(select(PatientReport).order_by(PatientReport.created_at.desc())).all()
+        
+        # Convert to dict format
+        reports_list = []
+        for report in reports:
+            reports_list.append({
+                "id": report.id,
+                "report_title": report.report_title or f"Report #{report.id}",
+                "health_score": report.health_score,
+                "triage_category": report.triage_category,
+                "created_at": report.created_at.isoformat(),
+                "predictions": json.loads(report.predictions_json) if report.predictions_json else {},
+                "patient_name": report.patient_name
+            })
+        
+        return {"reports": reports_list}
+    except Exception as e:
+        logger.error(f"Failed to fetch reports: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/reports/stats")
+def get_reports_stats(session: Session = Depends(get_session)):
+    """Calculate average health score and vitals from all reports."""
+    logger.info("Calculating report statistics")
+    try:
+        reports = session.exec(select(PatientReport)).all()
+        
+        if not reports:
+            return {
+                "count": 0,
+                "avg_health_score": 0,
+                "latest_predictions": {},
+                "avg_vitals": {}
+            }
+        
+        # Calculate average health score
+        total_health_score = sum(r.health_score for r in reports)
+        avg_health_score = round(total_health_score / len(reports))
+        
+        # Get latest predictions
+        latest_report = session.exec(
+            select(PatientReport).order_by(PatientReport.created_at.desc())
+        ).first()
+        latest_predictions = json.loads(latest_report.predictions_json) if latest_report and latest_report.predictions_json else {}
+        
+        # Calculate average vitals
+        vital_sums = {}
+        vital_counts = {}
+        
+        for report in reports:
+            if report.features_json:
+                features = json.loads(report.features_json)
+                for key, value in features.items():
+                    if isinstance(value, (int, float)) and value is not None:
+                        if key not in vital_sums:
+                            vital_sums[key] = 0
+                            vital_counts[key] = 0
+                        vital_sums[key] += value
+                        vital_counts[key] += 1
+        
+        avg_vitals = {}
+        for key in vital_sums:
+            if vital_counts[key] > 0:
+                avg_vitals[key] = round(vital_sums[key] / vital_counts[key], 1)
+        
+        return {
+            "count": len(reports),
+            "avg_health_score": avg_health_score,
+            "latest_predictions": latest_predictions,
+            "avg_vitals": avg_vitals
+        }
+    except Exception as e:
+        logger.error(f"Failed to calculate stats: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
