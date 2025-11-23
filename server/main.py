@@ -2,7 +2,6 @@ from fastapi import FastAPI, HTTPException, Depends, File, UploadFile, Form
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional, Dict, Any
-# MediGuard Server - Reload Triggered
 import json
 import hashlib
 import datetime
@@ -10,6 +9,7 @@ import logging
 import os
 from dotenv import load_dotenv
 import joblib
+import numpy as np
 from scipy.special import expit
 import pandas as pd
 from sqlmodel import Session, select
@@ -20,7 +20,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CATBOOST_MODEL_PATH = os.path.join(BASE_DIR, "mediguard_catboost.pkl")
 catboost_model = joblib.load(CATBOOST_MODEL_PATH)
 
-LABEL_MAP = {0: 'Thalasse', 1: 'Diabetes', 2: 'Anemia', 3: 'Thromboc', 4: 'Healthy'}
+LABEL_MAP = {0: 'Anemia', 1: 'Diabetes', 2: 'Healthy', 3: 'Thalasse', 4: 'Thromboc'}
 
 # Import Agents
 from intake_extraction_agent import IntakeExtractionAgent
@@ -30,13 +30,7 @@ from predictive_agent import PredictiveAgent
 
 # Import Database
 from database import create_db_and_tables, get_session
-from models import PatientReport, User, DigitalPassport
-
-# Import Blockchain & Passport Modules
-from blockchain_manager import BlockchainManager
-from merkle_tree import MerkleTree
-from digital_passport import PassportManager
-from qr_code_generator import QRCodeGenerator
+from models import PatientReport, User
 
 load_dotenv()
 
@@ -70,13 +64,33 @@ quality_agent = DataQualityAgent()
 scaling_bridge = ScalingBridge()
 predictive_agent = PredictiveAgent()
 
-# Initialize Blockchain & Passport Managers
-blockchain_manager = BlockchainManager()
-passport_manager = PassportManager(blockchain_manager)
+# Blockchain Simulation
+BLOCKCHAIN_FILE = "blockchain.json"
 
-# Blockchain Simulation (Legacy removed, replaced by BlockchainManager)
-# BLOCKCHAIN_FILE = "blockchain.json"
-# ... legacy functions removed ...
+def load_blockchain():
+    try:
+        with open(BLOCKCHAIN_FILE, "r") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return []
+
+def append_to_blockchain(data: dict):
+    chain = load_blockchain()
+    prev_hash = chain[-1]["hash"] if chain else "0" * 64
+    
+    block = {
+        "index": len(chain) + 1,
+        "timestamp": datetime.datetime.now().isoformat(),
+        "data": data,
+        "prev_hash": prev_hash,
+        "hash": hashlib.sha256(json.dumps(data, sort_keys=True).encode()).hexdigest()
+    }
+    
+    chain.append(block)
+    with open(BLOCKCHAIN_FILE, "w") as f:
+        json.dump(chain, f, indent=2)
+    
+    return block
 
 # Models
 class AnalysisRequest(BaseModel):
@@ -303,6 +317,14 @@ async def analyze_symptoms(
 
         # Optional: pick the highest probability class
         predicted_class = max(predictions, key=predictions.get)
+        
+         
+        # Get the index of the predicted class for SHAP
+        # We need to find the key in LABEL_MAP that corresponds to predicted_class
+        predicted_class_idx = next(k for k, v in LABEL_MAP.items() if v == predicted_class)
+        
+        # Generate SHAP explanation
+        explanation = predictive_agent.explain_prediction(catboost_model, input_df, predicted_class_idx)
 
         health_score = round(predictions.get('Healthy', 0) * 100)  # example: use 'Healthy' probability as score
 
@@ -320,32 +342,22 @@ async def analyze_symptoms(
                 "quality_report": quality_report,
                 "warnings": unified_data["warnings"] + quality_report["warnings"],
                 "predictions": predictions,
-                "predicted_class": predicted_class
+                "predicted_class": predicted_class,
+                "explanation": explanation
             }
         }
 
 
-        # --- Step 5: Blockchain Log (Enhanced) ---
-        # Create Merkle Tree for this transaction (in a real block, there would be multiple)
-        # For now, we treat this single analysis as the only leaf
-        transaction_data = json.dumps(clean_features, sort_keys=True)
-        merkle_tree = MerkleTree([transaction_data])
-        merkle_root = merkle_tree.get_root()
-        merkle_proof = merkle_tree.get_proof(0) # Proof for this transaction
-
+        # --- Step 5: Blockchain Log ---
         log_entry = {
             "type": "ANALYSIS_RESULT",
             "timestamp": datetime.datetime.now().isoformat(),
             "health_score": health_score,
             "triage": triage_category,
-            "triage": triage_category,
-            "features_hash": hashlib.md5(transaction_data.encode()).hexdigest()
+            "features_hash": hashlib.md5(json.dumps(clean_features, sort_keys=True).encode()).hexdigest()
         }
-        
-        # Append to blockchain with RSA signature
-        block = blockchain_manager.append_block(log_entry, merkle_root=merkle_root)
+        block = append_to_blockchain(log_entry)
         result["blockchain_log"] = block
-        result["merkle_proof"] = merkle_proof
         
         # --- Step 6: Save to Database ---
         db_report = PatientReport(
@@ -359,9 +371,7 @@ async def analyze_symptoms(
             raw_text=text[:500] if text else "PDF Upload",  # Store first 500 chars or PDF label
             features_json=json.dumps(clean_features),
             warnings_json=json.dumps(unified_data["warnings"] + quality_report["warnings"]),
-            blockchain_hash=block["hash"],
-            blockchain_block_index=block["index"],
-            merkle_proof_json=json.dumps(merkle_proof)
+            blockchain_hash=block["hash"]
         )
         session.add(db_report)
         session.commit()
@@ -389,78 +399,7 @@ def get_detailed_analysis(request: PredictionRequest):
 
 @app.get("/api/blockchain")
 def get_blockchain():
-    return blockchain_manager.chain
-
-@app.get("/api/blockchain/verify")
-def verify_blockchain():
-    """Verifies the integrity of the entire blockchain."""
-    return blockchain_manager.validate_chain()
-
-@app.get("/api/blockchain/merkle-verify/{report_id}")
-def verify_merkle_proof(report_id: int, session: Session = Depends(get_session)):
-    """Verifies that a specific report is included in the blockchain via Merkle proof."""
-    report = session.get(PatientReport, report_id)
-    if not report:
-        raise HTTPException(status_code=404, detail="Report not found")
-    
-    if not report.merkle_proof_json:
-        raise HTTPException(status_code=400, detail="No Merkle proof found for this report")
-        
-    # In a real app, we would reconstruct the leaf from the report data
-    # For now, we assume the leaf hash is what we stored or we reconstruct it same as in analyze
-    # Let's reconstruct it to be safe and correct
-    clean_features = json.loads(report.features_json)
-    transaction_data = json.dumps(clean_features, sort_keys=True)
-    leaf_hash = hashlib.sha256(transaction_data.encode()).hexdigest()
-    
-    # Get the block
-    # We need to find the block with the matching index
-    block = next((b for b in blockchain_manager.chain if b["index"] == report.blockchain_block_index), None)
-    if not block:
-        raise HTTPException(status_code=404, detail="Block not found")
-        
-    merkle_root = block.get("merkle_root")
-    proof = json.loads(report.merkle_proof_json)
-    
-    # Verify
-    # Note: Our current MerkleTree.verify_proof is a placeholder. 
-    # We need to fix it or use a simplified verification for this demo.
-    # Since we implemented a simple tree where we just need to re-hash up, let's do that.
-    # BUT, we need to know the path/order.
-    # For this demo, since we only have 1 item per block usually, the root IS the leaf hash.
-    # If we had multiple, we'd need the full proof logic.
-    
-    # Let's assume for this demo that if root == leaf (1 item) it's valid.
-    # If proof is not empty, we try to verify.
-    
-    is_valid = False
-    if not proof and merkle_root == leaf_hash:
-         is_valid = True
-    else:
-        # Try to verify with the proof (assuming we implemented verify_proof correctly)
-        # For now, let's just check if the root matches what we expect
-        is_valid = True # Placeholder for complex verification
-        
-    return {
-        "is_valid": is_valid,
-        "block_index": block["index"],
-        "merkle_root": merkle_root
-    }
-
-@app.post("/api/passport/issue")
-def issue_passport(report_id: int, session: Session = Depends(get_session)):
-    """Issues a verifiable digital passport."""
-    try:
-        passport = passport_manager.issue_passport(report_id, session)
-        return {"success": True, "passport": passport}
-    except Exception as e:
-        logger.error(f"Passport issuance failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.get("/api/passport/verify/{passport_id}")
-def verify_passport(passport_id: str, token: str, session: Session = Depends(get_session)):
-    """Verifies a digital passport."""
-    return passport_manager.verify_passport(passport_id, token, session)
+    return load_blockchain()
 
 @app.get("/api/reports")
 def get_reports(patient_id: Optional[str] = None, session: Session = Depends(get_session)):
@@ -492,11 +431,15 @@ def get_reports(patient_id: Optional[str] = None, session: Session = Depends(get
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/reports/stats")
-def get_reports_stats(session: Session = Depends(get_session)):
-    """Calculate average health score and vitals from all reports."""
-    logger.info("Calculating report statistics")
+def get_reports_stats(patient_id: Optional[str] = None, session: Session = Depends(get_session)):
+    """Calculate average health score and vitals from reports, optionally filtered by patient_id."""
+    logger.info(f"Calculating report statistics. Patient ID: {patient_id}")
     try:
-        reports = session.exec(select(PatientReport)).all()
+        query = select(PatientReport)
+        if patient_id:
+            query = query.where(PatientReport.patient_id == patient_id)
+            
+        reports = session.exec(query).all()
         
         if not reports:
             return {
@@ -511,9 +454,11 @@ def get_reports_stats(session: Session = Depends(get_session)):
         avg_health_score = round(total_health_score / len(reports))
         
         # Get latest predictions
-        latest_report = session.exec(
-            select(PatientReport).order_by(PatientReport.created_at.desc())
-        ).first()
+        latest_query = select(PatientReport).order_by(PatientReport.created_at.desc())
+        if patient_id:
+            latest_query = latest_query.where(PatientReport.patient_id == patient_id)
+            
+        latest_report = session.exec(latest_query).first()
         latest_predictions = json.loads(latest_report.predictions_json) if latest_report and latest_report.predictions_json else {}
         
         # Calculate average vitals
@@ -658,4 +603,3 @@ def get_reports_stats(session: Session = Depends(get_session)):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
-

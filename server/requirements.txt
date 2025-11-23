@@ -26,3 +26,4 @@ cryptography
 qrcode
 Pillow
 catboost
+shap
