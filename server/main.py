@@ -9,6 +9,7 @@ import logging
 import os
 from dotenv import load_dotenv
 import joblib
+import numpy as np
 from scipy.special import expit
 import pandas as pd
 from sqlmodel import Session, select
@@ -316,6 +317,14 @@ async def analyze_symptoms(
 
         # Optional: pick the highest probability class
         predicted_class = max(predictions, key=predictions.get)
+        
+         
+        # Get the index of the predicted class for SHAP
+        # We need to find the key in LABEL_MAP that corresponds to predicted_class
+        predicted_class_idx = next(k for k, v in LABEL_MAP.items() if v == predicted_class)
+        
+        # Generate SHAP explanation
+        explanation = predictive_agent.explain_prediction(catboost_model, input_df, predicted_class_idx)
 
         health_score = round(predictions.get('Healthy', 0) * 100)  # example: use 'Healthy' probability as score
 
@@ -333,7 +342,8 @@ async def analyze_symptoms(
                 "quality_report": quality_report,
                 "warnings": unified_data["warnings"] + quality_report["warnings"],
                 "predictions": predictions,
-                "predicted_class": predicted_class
+                "predicted_class": predicted_class,
+                "explanation": explanation
             }
         }
 
@@ -593,4 +603,3 @@ def get_reports_stats(session: Session = Depends(get_session)):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
-

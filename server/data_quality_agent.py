@@ -53,19 +53,19 @@ PHYSIO_RANGES: Dict[str, Tuple[float, float]] = {
 
 # Dataset ranges (narrower)
 DATASET_RANGES: Dict[str, Tuple[float, float]] = {
-    "bmi": (12, 55), "glucose": (60, 400),
-    "systolic_blood_pressure": (80, 220), "diastolic_blood_pressure": (40, 140),
-    "cholesterol": (100, 400), "ldl_cholesterol": (20, 300),
-    "hdl_cholesterol": (20, 120), "triglycerides": (20, 800),
-    "hemoglobin": (6, 20), "platelets": (5e3, 1e6),
-    "white_blood_cells": (1.0, 50.0), "red_blood_cells": (2.5, 7.5),
-    "hematocrit": (20, 60), "mean_corpuscular_volume": (60, 120),
-    "mean_corpuscular_hemoglobin": (15, 40),
-    "mean_corpuscular_hemoglobin_concentration": (20, 38),
-    "hba1c": (4.0, 15.0), "troponin": (0.0, 2.0),
-    "alt": (5, 300), "ast": (5, 300),
-    "creatinine": (0.2, 10), "c_reactive_protein": (0.0, 200.0),
-    "insulin": (2, 50), "heart_rate": (40, 120),
+    "bmi": (8, 80), "glucose": (30, 1000),
+    "systolic_blood_pressure": (50, 300), "diastolic_blood_pressure": (30, 200),
+    "cholesterol": (50, 1000), "ldl_cholesterol": (10, 1000),
+    "hdl_cholesterol": (5, 200), "triglycerides": (5, 2000),
+    "hemoglobin": (3, 25), "platelets": (1e3, 5e6),
+    "white_blood_cells": (0.1, 200), "red_blood_cells": (0.5, 10),
+    "hematocrit": (5, 80), "mean_corpuscular_volume": (40, 150),
+    "mean_corpuscular_hemoglobin": (5, 50),
+    "mean_corpuscular_hemoglobin_concentration": (10, 50),
+    "hba1c": (3.0, 25.0), "troponin": (0.0, 100.0),
+    "alt": (1, 2000), "ast": (1, 2000),
+    "creatinine": (0.01, 50), "c_reactive_protein": (0.0, 500.0),
+    "insulin": (0, 1000), "heart_rate": (30, 250),
 }
 
 def _to_number(value: Any) -> Optional[float]:

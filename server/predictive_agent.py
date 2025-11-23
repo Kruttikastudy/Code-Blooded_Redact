@@ -12,6 +12,9 @@ import logging
 from typing import Dict, Any, List
 import google.generativeai as genai
 from dotenv import load_dotenv
+import shap
+import pandas as pd
+import numpy as np
 
 load_dotenv()
 
@@ -62,6 +65,58 @@ class PredictiveAgent:
         except Exception as e:
             logger.error(f"Predictive analysis failed: {e}")
             return self._get_mock_predictions()
+
+    def explain_prediction(self, model, input_df: pd.DataFrame, predicted_class_idx: int) -> Dict[str, Any]:
+        """
+        Generate SHAP explanations for the model's prediction.
+        
+        Args:
+            model: The trained CatBoost model.
+            input_df: DataFrame containing the single instance to explain.
+            predicted_class_idx: The index of the predicted class.
+            
+        Returns:
+            Dict containing top contributing features.
+        """
+        try:
+            # Create explainer (TreeExplainer is optimized for CatBoost)
+            explainer = shap.TreeExplainer(model)
+            
+            # Calculate SHAP values
+            shap_values = explainer.shap_values(input_df)
+            
+            # For multiclass, shap_values is a list of arrays (one for each class)
+            # We want the values for the predicted class
+            if isinstance(shap_values, list):
+                class_shap_values = shap_values[predicted_class_idx]
+            else:
+                class_shap_values = shap_values # Binary case
+                
+            # Get the values for the single instance (row 0)
+            instance_values = class_shap_values[0]
+            feature_names = input_df.columns.tolist()
+            
+            # Create a list of (feature, value) tuples
+            feature_importance = [
+                {"feature": feature_names[i], "impact": float(instance_values[i]), "value": float(input_df.iloc[0, i])}
+                for i in range(len(feature_names))
+            ]
+            
+            # Sort by absolute impact to find most important features
+            feature_importance.sort(key=lambda x: abs(x["impact"]), reverse=True)
+            
+            # Separate into positive (pushing towards class) and negative (pushing away)
+            # Note: "Positive" impact means it makes the predicted class MORE likely.
+            top_features = feature_importance[:5] # Top 5 most impactful features
+            
+            return {
+                "top_features": top_features,
+                "base_value": float(explainer.expected_value[predicted_class_idx]) if isinstance(explainer.expected_value, list) else float(explainer.expected_value)
+            }
+            
+        except Exception as e:
+            logger.error(f"SHAP explanation failed: {e}")
+            return {"error": str(e)}
 
     def _get_mock_predictions(self) -> Dict[str, Any]:
         """Fallback mock data if API fails."""

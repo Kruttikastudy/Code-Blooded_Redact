@@ -22,4 +22,8 @@ numpy
 pandas
 joblib
 scikit-learn
+cryptography
+qrcode
+Pillow
 catboost
+shap
