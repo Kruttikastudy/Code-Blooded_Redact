@@ -11,6 +11,9 @@ import { useEffect, useState } from 'react';
 
 export default function Dashboard() {
     const [userName, setUserName] = useState('User');
+    const [healthScore, setHealthScore] = useState(85);
+    const [diseaseRisks, setDiseaseRisks] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         // Fetch user name from localStorage
@@ -23,10 +26,56 @@ export default function Dashboard() {
                 console.error('Failed to parse user data:', e);
             }
         }
+
+        // Fetch stats from backend
+        fetchStats();
     }, []);
 
-    // Mock Data
-    const healthScore = 85;
+    const fetchStats = async () => {
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/reports/stats`);
+            if (!response.ok) throw new Error('Failed to fetch stats');
+
+            const data = await response.json();
+
+            // Update health score
+            setHealthScore(data.avg_health_score || 85);
+
+            // Update disease risks from latest predictions
+            if (data.latest_predictions && Object.keys(data.latest_predictions).length > 0) {
+                const risks = Object.entries(data.latest_predictions)
+                    .map(([name, probability]: [string, any]) => ({
+                        name,
+                        risk: Math.round(probability * 100),
+                        color: probability > 0.7 ? 'bg-red-500' : probability > 0.4 ? 'bg-amber-500' : 'bg-emerald-500',
+                        reason: `Based on latest health analysis`,
+                        evidence: `Risk probability: ${(probability * 100).toFixed(1)}%`
+                    }))
+                    .sort((a, b) => b.risk - a.risk)
+                    .slice(0, 3);
+
+                setDiseaseRisks(risks);
+            } else {
+                // Default risks if no data
+                setDiseaseRisks([
+                    {
+                        name: 'Hypertension',
+                        risk: 35,
+                        color: 'bg-amber-500',
+                        reason: 'No analysis data available yet',
+                        evidence: 'Create a report to see personalized risks'
+                    }
+                ]);
+            }
+        } catch (error) {
+            console.error('Error fetching stats:', error);
+            // Keep default values on error
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Mock Data for vitals (keeping these as mock for now)
     const vitals = [
         {
             label: 'Heart Rate',
@@ -71,30 +120,6 @@ export default function Dashboard() {
             trend: '+1%',
             trendUp: true,
             chart: 'M0,25 L10,25 L15,5 L20,25 L40,25'
-        }
-    ];
-
-    const diseaseRisks = [
-        {
-            name: 'Hypertension',
-            risk: 35,
-            color: 'bg-amber-500',
-            reason: 'Elevated BP readings in last 3 checkups',
-            evidence: 'Avg BP: 135/85 mmHg (Nov 2024)'
-        },
-        {
-            name: 'Type 2 Diabetes',
-            risk: 12,
-            color: 'bg-emerald-500',
-            reason: 'Normal glucose levels, healthy BMI',
-            evidence: 'HbA1c: 5.4% (Oct 2024)'
-        },
-        {
-            name: 'Coronary Heart Disease',
-            risk: 45,
-            color: 'bg-rose-500',
-            reason: 'Family history + slightly elevated cholesterol',
-            evidence: 'LDL: 130 mg/dL, HDL: 45 mg/dL'
         }
     ];
 

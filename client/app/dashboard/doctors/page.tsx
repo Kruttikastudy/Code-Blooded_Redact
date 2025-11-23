@@ -13,72 +13,72 @@ export default function DoctorsPage() {
     const [selectedLocation, setSelectedLocation] = useState('All');
 
     const specialties = ['All', 'Cardiologist', 'Dermatologist', 'Neurologist', 'Pediatrician', 'Orthopedic'];
-    const locations = ['All', 'New York, NY', 'Los Angeles, CA', 'Chicago, IL', 'Houston, TX'];
+    const locations = ['All', 'Borivali, Mumbai', 'Kandivali, Mumbai', 'Andheri, Mumbai', 'Dahisar, Mumbai', 'Malad, Mumbai'];
 
     const doctors = [
         {
             id: 1,
-            name: 'Dr. Sarah Smith',
+            name: 'Dr. Priya Sharma',
             specialty: 'Cardiologist',
-            education: 'MD - Harvard Medical School',
+            education: 'MD - Grant Medical College, Mumbai',
             rating: 4.9,
             reviews: 128,
-            location: 'New York, NY',
+            location: 'Borivali, Mumbai',
             image: 'https://i.pravatar.cc/150?img=5',
             available: true
         },
         {
             id: 2,
-            name: 'Dr. James Wilson',
+            name: 'Dr. Rajesh Mehta',
             specialty: 'Neurologist',
-            education: 'MD - Johns Hopkins University',
+            education: 'MD - KEM Hospital, Mumbai',
             rating: 4.8,
             reviews: 95,
-            location: 'Los Angeles, CA',
+            location: 'Kandivali, Mumbai',
             image: 'https://i.pravatar.cc/150?img=11',
             available: true
         },
         {
             id: 3,
-            name: 'Dr. Emily Chen',
+            name: 'Dr. Anjali Desai',
             specialty: 'Dermatologist',
-            education: 'MD - Stanford University',
+            education: 'MD - Lokmanya Tilak Medical College',
             rating: 4.9,
             reviews: 210,
-            location: 'Chicago, IL',
+            location: 'Andheri, Mumbai',
             image: 'https://i.pravatar.cc/150?img=9',
             available: false
         },
         {
             id: 4,
-            name: 'Dr. Michael Brown',
+            name: 'Dr. Vikram Patel',
             specialty: 'Orthopedic Surgeon',
-            education: 'MD - Mayo Clinic Alix School',
+            education: 'MD - Tata Memorial Hospital',
             rating: 4.7,
             reviews: 84,
-            location: 'Houston, TX',
+            location: 'Dahisar, Mumbai',
             image: 'https://i.pravatar.cc/150?img=13',
             available: true
         },
         {
             id: 5,
-            name: 'Dr. Lisa Patel',
+            name: 'Dr. Kavita Iyer',
             specialty: 'Pediatrician',
-            education: 'MD - UPenn Perelman School',
+            education: 'MD - BYL Nair Hospital, Mumbai',
             rating: 5.0,
             reviews: 156,
-            location: 'New York, NY',
+            location: 'Malad, Mumbai',
             image: 'https://i.pravatar.cc/150?img=24',
             available: true
         },
         {
             id: 6,
-            name: 'Dr. Robert Taylor',
+            name: 'Dr. Arjun Nair',
             specialty: 'Cardiologist',
-            education: 'MD - Columbia University',
+            education: 'MD - Sion Hospital, Mumbai',
             rating: 4.6,
             reviews: 72,
-            location: 'Chicago, IL',
+            location: 'Borivali, Mumbai',
             image: 'https://i.pravatar.cc/150?img=60',
             available: true
         }

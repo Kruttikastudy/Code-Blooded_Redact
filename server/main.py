@@ -333,6 +333,7 @@ def analyze_symptoms(request: AnalysisRequest, session: Session = Depends(get_se
 
             health_score=health_score,
             triage_category=triage_category,
+            predictions_json=json.dumps(predictions),  # Save disease predictions
             raw_text=request.text[:500],  # Store first 500 chars
             features_json=json.dumps(clean_features),
             warnings_json=json.dumps(unified_data["warnings"] + quality_report["warnings"]),
@@ -365,6 +366,139 @@ def get_detailed_analysis(request: PredictionRequest):
 @app.get("/api/blockchain")
 def get_blockchain():
     return load_blockchain()
+
+@app.get("/api/reports")
+def get_reports(session: Session = Depends(get_session)):
+    """Fetch all reports, ordered by most recent first."""
+    logger.info("Fetching all reports")
+    try:
+        reports = session.exec(select(PatientReport).order_by(PatientReport.created_at.desc())).all()
+        
+        # Convert to dict format
+        reports_list = []
+        for report in reports:
+            reports_list.append({
+                "id": report.id,
+                "report_title": report.report_title or f"Report #{report.id}",
+                "health_score": report.health_score,
+                "triage_category": report.triage_category,
+                "created_at": report.created_at.isoformat(),
+                "predictions": json.loads(report.predictions_json) if report.predictions_json else {},
+                "patient_name": report.patient_name
+            })
+        
+        return {"reports": reports_list}
+    except Exception as e:
+        logger.error(f"Failed to fetch reports: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/reports/stats")
+def get_reports_stats(session: Session = Depends(get_session)):
+    """Calculate average health score and vitals from all reports."""
+    logger.info("Calculating report statistics")
+    try:
+        reports = session.exec(select(PatientReport)).all()
+        
+        if not reports:
+            return {
+                "count": 0,
+                "avg_health_score": 0,
+                "latest_predictions": {},
+                "avg_vitals": {}
+            }
+        
+        # Calculate average health score
+        total_health_score = sum(r.health_score for r in reports)
+        avg_health_score = round(total_health_score / len(reports))
+        
+        # Get latest predictions
+        latest_report = session.exec(
+            select(PatientReport).order_by(PatientReport.created_at.desc())
+        ).first()
+        latest_predictions = json.loads(latest_report.predictions_json) if latest_report and latest_report.predictions_json else {}
+        
+        # Calculate average vitals
+        vital_sums = {}
+        vital_counts = {}
+        
+        for report in reports:
+            if report.features_json:
+                features = json.loads(report.features_json)
+                for key, value in features.items():
+                    if isinstance(value, (int, float)) and value is not None:
+                        if key not in vital_sums:
+                            vital_sums[key] = 0
+                            vital_counts[key] = 0
+                        vital_sums[key] += value
+                        vital_counts[key] += 1
+        
+        avg_vitals = {}
+        for key in vital_sums:
+            if vital_counts[key] > 0:
+                avg_vitals[key] = round(vital_sums[key] / vital_counts[key], 1)
+        
+        return {
+            "count": len(reports),
+            "avg_health_score": avg_health_score,
+            "latest_predictions": latest_predictions,
+            "avg_vitals": avg_vitals
+        }
+    except Exception as e:
+        logger.error(f"Failed to calculate stats: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/reports/{report_id}")
+def get_report(report_id: int, session: Session = Depends(get_session)):
+    """Fetch a single report by ID."""
+    logger.info(f"Fetching report {report_id}")
+    try:
+        report = session.get(PatientReport, report_id)
+        
+        if not report:
+            raise HTTPException(status_code=404, detail="Report not found")
+        
+        return {
+            "id": report.id,
+            "report_title": report.report_title or f"Report #{report.id}",
+            "patient_name": report.patient_name,
+            "health_score": report.health_score,
+            "triage_category": report.triage_category,
+            "predictions": json.loads(report.predictions_json) if report.predictions_json else {},
+            "features": json.loads(report.features_json) if report.features_json else {},
+            "warnings": json.loads(report.warnings_json) if report.warnings_json else [],
+            "created_at": report.created_at.isoformat(),
+            "blockchain_hash": report.blockchain_hash
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to fetch report: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.patch("/api/reports/{report_id}")
+def update_report(report_id: int, request: dict, session: Session = Depends(get_session)):
+    """Update a report's title."""
+    logger.info(f"Updating report {report_id}")
+    try:
+        report = session.get(PatientReport, report_id)
+        
+        if not report:
+            raise HTTPException(status_code=404, detail="Report not found")
+        
+        # Update report title
+        if "report_title" in request:
+            report.report_title = request["report_title"]
+        
+        session.add(report)
+        session.commit()
+        session.refresh(report)
+        
+        return {"success": True, "message": "Report updated successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to update report: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
     import uvicorn

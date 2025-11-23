@@ -20,6 +20,12 @@ class PatientReport(SQLModel, table=True):
     
     id: Optional[int] = Field(default=None, primary_key=True)
     
+    # User Association
+    user_id: Optional[int] = None  # Link to User.id
+    
+    # Report Metadata
+    report_title: Optional[str] = None  # User-friendly report name
+    
     # Patient Info
     patient_name: Optional[str] = None
     age: Optional[int] = None
@@ -28,6 +34,9 @@ class PatientReport(SQLModel, table=True):
     # Analysis Results
     health_score: int
     triage_category: str  # "Green", "Yellow", "Red"
+    
+    # Predictions (Disease Risks)
+    predictions_json: Optional[str] = None  # JSON dump of disease predictions
     
     # Raw Data (JSON stored as text)
     raw_text: Optional[str] = None  # Original input text

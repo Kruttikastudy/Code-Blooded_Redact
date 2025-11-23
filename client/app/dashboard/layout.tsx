@@ -3,7 +3,7 @@
 import {
     LayoutDashboard, FilePlus, ClipboardList,
     Stethoscope, Trophy, Smartphone, Settings,
-    LogOut, Shield
+    LogOut, Shield, History
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -22,6 +22,7 @@ function DashboardLayoutContent({
     const navItems = [
         { icon: LayoutDashboard, label: t('nav.overview'), href: '/dashboard' },
         { icon: FilePlus, label: t('nav.addReport'), href: '/dashboard/reports/new' },
+        { icon: History, label: 'History', href: '/dashboard/reports/history' },
         { icon: ClipboardList, label: t('nav.actionPlan'), href: '/dashboard/plan' },
         { icon: Stethoscope, label: t('nav.contactDoctors'), href: '/dashboard/doctors' },
         { icon: Trophy, label: t('nav.communityChallenges'), href: '/dashboard/community' },

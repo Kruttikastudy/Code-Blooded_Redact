@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
     Upload, FileText, Activity, User, Calendar,
     CheckCircle2, AlertCircle, Loader2, ChevronRight,
-    Info, HeartPulse, Brain, ShieldCheck, AlertTriangle
+    Info, HeartPulse, Brain, ShieldCheck, AlertTriangle, Save
 } from 'lucide-react';
 import { NeonButton } from '@/components/ui/NeonButton';
 
@@ -27,6 +27,9 @@ export default function AddReportPage() {
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [analysisStep, setAnalysisStep] = useState(0);
     const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
+    const [reportTitle, setReportTitle] = useState('');
+    const [isSaving, setIsSaving] = useState(false);
+    const [showSaveSuccess, setShowSaveSuccess] = useState(false);
 
     // Form State
     const [formData, setFormData] = useState({
@@ -111,6 +114,35 @@ export default function AddReportPage() {
         }
     };
 
+    const handleSaveReport = async () => {
+        if (!analysisResult || !reportTitle.trim()) {
+            alert('Please enter a report title');
+            return;
+        }
+
+        setIsSaving(true);
+        try {
+            // Update the existing report with title
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/reports/${analysisResult.report_id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    report_title: reportTitle
+                })
+            });
+
+            if (!response.ok) throw new Error('Failed to save report');
+
+            setShowSaveSuccess(true);
+            setTimeout(() => setShowSaveSuccess(false), 3000);
+        } catch (error) {
+            console.error('Save error:', error);
+            alert('Failed to save report. Please try again.');
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
     const vitalsList = [
         "Glucose", "Cholesterol", "Hemoglobin", "Platelets",
         "White Blood Cells", "Red Blood Cells", "Hematocrit", "Mean Corpuscular Volume",
@@ -155,10 +187,47 @@ export default function AddReportPage() {
                             <h1 className="text-3xl font-bold text-slate-900">Analysis Report</h1>
                             <p className="text-slate-500 mt-1">Generated on {new Date().toLocaleDateString()}</p>
                         </div>
-                        <NeonButton variant="blue" onClick={() => window.location.reload()}>
-                            Start New Analysis
-                        </NeonButton>
+                        <div className="flex gap-3">
+                            <NeonButton variant="blue" onClick={() => window.location.reload()}>
+                                Start New Analysis
+                            </NeonButton>
+                        </div>
                     </div>
+
+                    {/* Save Report Section */}
+                    {showSaveSuccess ? (
+                        <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 flex items-center gap-3">
+                            <CheckCircle2 className="text-emerald-600" size={24} />
+                            <div>
+                                <p className="font-semibold text-emerald-900">Report Saved Successfully!</p>
+                                <p className="text-sm text-emerald-700">You can view it in your History</p>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="bg-white rounded-2xl p-6 border border-slate-200">
+                            <h3 className="text-lg font-semibold text-slate-900 mb-4">Save This Report</h3>
+                            <div className="flex gap-3">
+                                <input
+                                    type="text"
+                                    value={reportTitle}
+                                    onChange={(e) => setReportTitle(e.target.value)}
+                                    placeholder="Enter report title (e.g., 'Monthly Checkup - Jan 2024')"
+                                    className="flex-1 px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                                />
+                                <button
+                                    onClick={handleSaveReport}
+                                    disabled={isSaving || !reportTitle.trim()}
+                                    className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                                >
+                                    {isSaving ? (
+                                        <><Loader2 className="animate-spin" size={18} /> Saving...</>
+                                    ) : (
+                                        <><Save size={18} /> Save Report</>
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Top Cards: Health Score & Triage */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
