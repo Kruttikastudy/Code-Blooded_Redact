@@ -29,7 +29,18 @@ export default function HistoryPage() {
 
     const fetchReports = async () => {
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/reports`);
+            let url = `${process.env.NEXT_PUBLIC_API_URL}/api/reports`;
+
+            // Get patient_id from localStorage
+            const userStr = localStorage.getItem('user');
+            if (userStr) {
+                const user = JSON.parse(userStr);
+                if (user.patient_id) {
+                    url += `?patient_id=${user.patient_id}`;
+                }
+            }
+
+            const response = await fetch(url);
             if (!response.ok) throw new Error('Failed to fetch reports');
 
             const data = await response.json();
