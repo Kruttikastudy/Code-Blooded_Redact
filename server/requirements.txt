@@ -21,10 +21,7 @@ numpy
 pandas
 joblib
 scikit-learn
-<<<<<<< HEAD
 cryptography
 qrcode
 Pillow
-=======
 catboost
->>>>>>> 0776d26ec994cfa58aaca7a2d912300cbfe20d00
