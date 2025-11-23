@@ -401,27 +401,7 @@ export default function AddReportPage() {
                     </motion.div>
 
                     {/* Warnings & Recommendations */}
-                    {analysisResult.analysis.warnings.length > 0 && (
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.4 }}
-                            className="bg-amber-50 rounded-2xl border border-amber-200 p-6"
-                        >
-                            <h3 className="text-lg font-bold text-amber-800 mb-4 flex items-center gap-2">
-                                <AlertTriangle size={24} />
-                                Clinical Warnings
-                            </h3>
-                            <ul className="space-y-3">
-                                {analysisResult.analysis.warnings.map((warning, idx) => (
-                                    <li key={idx} className="flex items-start gap-3 text-amber-900 bg-white/50 p-3 rounded-lg">
-                                        <AlertCircle size={18} className="mt-0.5 flex-shrink-0 text-amber-600" />
-                                        {warning}
-                                    </li>
-                                ))}
-                            </ul>
-                        </motion.div>
-                    )}
+
                 </div>
             </div>
         );
@@ -566,8 +546,8 @@ export default function AddReportPage() {
                                             className="hidden"
                                         />
                                         <div className={`border-2 border-dashed rounded-xl p-8 transition-all ${pdfFile
-                                                ? 'border-emerald-400 bg-emerald-50'
-                                                : 'border-slate-300 hover:border-blue-400 hover:bg-blue-50'
+                                            ? 'border-emerald-400 bg-emerald-50'
+                                            : 'border-slate-300 hover:border-blue-400 hover:bg-blue-50'
                                             }`}>
                                             {pdfFile ? (
                                                 <div className="flex items-center justify-center gap-3 text-emerald-700">

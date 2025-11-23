@@ -25,16 +25,54 @@ export default function DetailedReportPage() {
         novel_insights: [
             { title: "Stress-Heart Correlation", description: "Your BP spikes correlate with weekday evenings, suggesting work-related stress.", type: "warning" },
             { title: "Recovery Potential", description: "Your young biological age suggests rapid recovery potential if lifestyle changes are made now.", type: "success" }
-        ]
+        ],
+        explanation: {
+            predicted_class: "Healthy",
+            top_features: [
+                { feature: "Glucose", impact: 0.234, value: 95.5 },
+                { feature: "Blood Pressure (Systolic)", impact: -0.156, value: 118.0 },
+                { feature: "BMI", impact: 0.089, value: 24.3 },
+                { feature: "Cholesterol", impact: -0.067, value: 185.0 },
+                { feature: "Heart Rate", impact: 0.045, value: 72.0 }
+            ],
+            base_value: -0.523
+        }
     };
 
     useEffect(() => {
-        // In a real app, we would fetch this from the backend using the user's latest report ID.
-        // For this demo, we'll simulate a fetch and use mock data or data from local storage if available.
-        setTimeout(() => {
-            setData(mockData);
-            setLoading(false);
-        }, 1500);
+        // Get report ID from URL query params
+        const params = new URLSearchParams(window.location.search);
+        const reportId = params.get('id');
+
+        if (!reportId) {
+            // No ID provided, use mock data
+            setTimeout(() => {
+                setData(mockData);
+                setLoading(false);
+            }, 1500);
+            return;
+        }
+
+        // Fetch real report data from API
+        fetch(`http://localhost:8000/api/reports/${reportId}`)
+            .then(res => res.json())
+            .then(reportData => {
+                // Transform API data to match component structure
+                const transformedData = {
+                    persistence_risks: reportData.predictions?.persistence_risks || mockData.persistence_risks,
+                    improvement_gains: reportData.predictions?.improvement_gains || mockData.improvement_gains,
+                    novel_insights: reportData.predictions?.novel_insights || mockData.novel_insights,
+                    explanation: reportData.explanation || mockData.explanation
+                };
+                setData(transformedData);
+                setLoading(false);
+            })
+            .catch(error => {
+                console.error('Failed to fetch report:', error);
+                // Fallback to mock data on error
+                setData(mockData);
+                setLoading(false);
+            });
     }, []);
 
     if (loading) {
@@ -198,6 +236,85 @@ export default function DetailedReportPage() {
                                 </div>
                             ))}
                         </div>
+                    </div>
+                </motion.div>
+
+                {/* SHAP Explainability Section */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.6 }}
+                    className="bg-white rounded-3xl p-8 border border-violet-100 shadow-sm relative overflow-hidden"
+                >
+                    <div className="absolute top-0 left-0 w-96 h-96 bg-violet-50 rounded-br-full -z-10 opacity-50" />
+
+                    <div className="relative z-10">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="p-3 bg-violet-100 text-violet-600 rounded-xl">
+                                <Brain size={24} />
+                            </div>
+                            <div>
+                                <h2 className="text-2xl font-bold text-slate-900">SHAP Explainability</h2>
+                                <p className="text-slate-500 text-sm">Why did the AI make this prediction?</p>
+                            </div>
+                        </div>
+
+                        <p className="text-slate-600 mb-8">
+                            These are the clinical features that had the most influence on your {data.explanation?.predicted_class || 'health'} prediction.
+                        </p>
+
+                        <div className="space-y-4">
+                            {data.explanation?.top_features?.map((feature: any, index: number) => {
+                                const isPositive = feature.impact > 0;
+                                const absImpact = Math.abs(feature.impact);
+                                const maxImpact = Math.max(...(data.explanation?.top_features?.map((f: any) => Math.abs(f.impact)) || [1]));
+                                const widthPercent = (absImpact / maxImpact) * 100;
+
+                                return (
+                                    <div key={index} className="bg-slate-50 rounded-2xl p-5 border border-slate-200">
+                                        <div className="flex justify-between items-start mb-3">
+                                            <div>
+                                                <h3 className="font-bold text-slate-800">{feature.feature}</h3>
+                                                <p className="text-sm text-slate-500">Value: {feature.value?.toFixed(2)}</p>
+                                            </div>
+                                            <span className={`text-xs font-bold px-3 py-1 rounded-full ${isPositive
+                                                ? 'bg-emerald-100 text-emerald-700'
+                                                : 'bg-rose-100 text-rose-700'
+                                                }`}>
+                                                {isPositive ? '+' : ''}{feature.impact.toFixed(3)}
+                                            </span>
+                                        </div>
+
+                                        {/* Impact Bar */}
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-xs text-slate-400 w-16">
+                                                {isPositive ? 'Increases' : 'Decreases'}
+                                            </span>
+                                            <div className="flex-1 h-3 bg-slate-200 rounded-full overflow-hidden">
+                                                <motion.div
+                                                    initial={{ width: 0 }}
+                                                    animate={{ width: `${widthPercent}%` }}
+                                                    transition={{ duration: 0.8, delay: 0.1 * index }}
+                                                    className={`h-full rounded-full ${isPositive
+                                                        ? 'bg-gradient-to-r from-emerald-400 to-emerald-600'
+                                                        : 'bg-gradient-to-r from-rose-400 to-rose-600'
+                                                        }`}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        {data.explanation?.base_value !== undefined && (
+                            <div className="mt-6 p-4 bg-violet-50 rounded-xl border border-violet-100">
+                                <p className="text-sm text-violet-700">
+                                    <span className="font-semibold">Base Value:</span> {data.explanation.base_value.toFixed(3)}
+                                    <span className="text-violet-500 ml-2">(baseline prediction before features)</span>
+                                </p>
+                            </div>
+                        )}
                     </div>
                 </motion.div>
 

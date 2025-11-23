@@ -102,6 +102,80 @@ class DataQualityAgent:
         else:
             self.model = None
 
+    def detect_anomalous_patterns(self, raw_features: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Detect unrealistic input patterns that suggest data quality issues.
+        
+        Returns:
+            Dict with 'is_anomalous' (bool), 'anomaly_type' (str), and 'anomaly_score' (float)
+        """
+        numeric_values = []
+        total_features = len(CANONICAL_FEATURES)
+        provided_features = 0
+        
+        for feat in CANONICAL_FEATURES:
+            raw_val = raw_features.get(feat)
+            num = _to_number(raw_val)
+            if num is not None:
+                numeric_values.append(num)
+                provided_features += 1
+        
+        # Check 1: Too few features provided (< 30%)
+        if provided_features < total_features * 0.3:
+            return {
+                "is_anomalous": True,
+                "anomaly_type": "insufficient_data",
+                "anomaly_score": 0.9,
+                "message": f"Only {provided_features}/{total_features} features provided. Need at least {int(total_features * 0.3)} for reliable prediction."
+            }
+        
+        # Check 2: All values are exactly the same
+        if len(numeric_values) >= 3:
+            unique_values = set(numeric_values)
+            if len(unique_values) == 1:
+                return {
+                    "is_anomalous": True,
+                    "anomaly_type": "all_identical",
+                    "anomaly_score": 1.0,
+                    "message": f"All {len(numeric_values)} numeric values are identical ({numeric_values[0]}). This is highly unrealistic for clinical data."
+                }
+            
+            # Check 3: Values are suspiciously uniform (low variance)
+            if len(numeric_values) >= 5:
+                mean_val = sum(numeric_values) / len(numeric_values)
+                variance = sum((x - mean_val) ** 2 for x in numeric_values) / len(numeric_values)
+                std_dev = variance ** 0.5
+                coefficient_of_variation = std_dev / mean_val if mean_val > 0 else 0
+                
+                # If coefficient of variation is very low, data is suspiciously uniform
+                if coefficient_of_variation < 0.05:  # Less than 5% variation
+                    return {
+                        "is_anomalous": True,
+                        "anomaly_type": "suspiciously_uniform",
+                        "anomaly_score": 0.8,
+                        "message": f"Values show unusually low variation (CV={coefficient_of_variation:.3f}). Clinical vitals typically vary more."
+                    }
+        
+        # Check 4: Too many round numbers (potential manual fabrication)
+        if len(numeric_values) >= 5:
+            round_count = sum(1 for v in numeric_values if v == int(v))
+            round_percentage = round_count / len(numeric_values)
+            if round_percentage > 0.9:  # More than 90% are round numbers
+                return {
+                    "is_anomalous": True,
+                    "anomaly_type": "too_many_round_numbers",
+                    "anomaly_score": 0.6,
+                    "message": f"{round_percentage*100:.0f}% of values are round numbers. Real clinical data usually has more decimal precision."
+                }
+        
+        # No anomalies detected
+        return {
+            "is_anomalous": False,
+            "anomaly_type": None,
+            "anomaly_score": 0.0,
+            "message": "Input pattern appears normal."
+        }
+
     def validate(self, raw_features: Dict[str, Any]) -> Dict[str, Any]:
         clean_features = {k: None for k in CANONICAL_FEATURES}
         missing_fields = []

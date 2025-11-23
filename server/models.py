@@ -39,6 +39,7 @@ class PatientReport(SQLModel, table=True):
     
     # Predictions (Disease Risks)
     predictions_json: Optional[str] = None  # JSON dump of disease predictions
+    explanation_json: Optional[str] = None  # JSON dump of SHAP explanation
     
     # Raw Data (JSON stored as text)
     raw_text: Optional[str] = None  # Original input text

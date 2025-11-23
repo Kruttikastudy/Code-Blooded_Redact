@@ -97,10 +97,19 @@ class PredictiveAgent:
             feature_names = input_df.columns.tolist()
             
             # Create a list of (feature, value) tuples
-            feature_importance = [
-                {"feature": feature_names[i], "impact": float(instance_values[i]), "value": float(input_df.iloc[0, i])}
-                for i in range(len(feature_names))
-            ]
+            feature_importance = []
+            for i in range(len(feature_names)):
+                try:
+                    impact = float(instance_values[i]) if hasattr(instance_values[i], '__float__') else float(instance_values[i])
+                    feature_value = float(input_df.iloc[0, i])
+                    feature_importance.append({
+                        "feature": feature_names[i],
+                        "impact": impact,
+                        "value": feature_value
+                    })
+                except (TypeError, ValueError) as e:
+                    logger.warning(f"Failed to process feature {feature_names[i]}: {e}")
+                    continue
             
             # Sort by absolute impact to find most important features
             feature_importance.sort(key=lambda x: abs(x["impact"]), reverse=True)

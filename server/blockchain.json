@@ -370,5 +370,125 @@
     "rsa_signature": "IjZE1nbzOABfGPjYqcpdox4fjwcSxrZw6HSVB/QoR3vm0DBSNgZGKP0oP2lB2n8M2PLG9nBs1Fl3QRMSCbZ6MO0on9dTsIAohMlSXWpo4pmRrzj8q78VR7Mkbi20IJqAy6vrL9XCTanPYt6/n5l4j5rzB0HPd8fNk66Vrwag1pbwbsdGqXMOzrLMBk/LONXwXi9XLaHDIToKQqT6Cz9834xb/OEiCNi4GwbGZ2fKiSYvk7ot7tIWiMxdCNlLHJlanDyoxT0v7LXLrazMK7Hdr1oTNGneIPPn1sfGN7+nP83htsZtcaFuRjDSXoMvrhrLv0lWsiR6PE7rLlO8r8IrWxnVcpOz1L5jCTl2QttdWBHU0kSzq8hahYR29AQ+N23kWy8mhzGvpolTk5ZNNtYOGDXZe8VVs0WJib/UsNk/U0VsyhT8j66xgfHY9EzMXNwgkFXFv7Xos2N/mpvMly59qFyAlWGzCBVRlE1eTT5IA7axnuasNvxmrnnsTtM5xrdq0H3onnHb5yoAg1jCD2LRLzC/V0H9ThcfqFe28T0lkMoXMLj7S9iGqJNpPVoSipfBzjPGhDtiqUZL88lT2sDzLChjDyCiqey2JZQadOtItXfEnnvZt+Hq6ECO0er3JWJ4Fyvh5Ktrv5cEsA8J8TQ0nP6aPNoZqWhd0p7iIPUE2hc=",
     "hash": "85f26c398a35f69f0f805264a44089a93608221d1182dd004f6c916c50c0ca61",
     "is_valid": true
+  },
+  {
+    "index": 28,
+    "timestamp": "2025-11-23T10:10:07.540241",
+    "data": {
+      "type": "ANALYSIS_RESULT",
+      "timestamp": "2025-11-23T10:10:07.540241",
+      "health_score": 41,
+      "triage": "Red",
+      "features_hash": "0ed10ff2a400414915ee64bdc246defa"
+    },
+    "prev_hash": "85f26c398a35f69f0f805264a44089a93608221d1182dd004f6c916c50c0ca61",
+    "merkle_root": "{\"alt\": null, \"ast\": null, \"bmi\": 30.0, \"c_reactive_protein\": null, \"cholesterol\": null, \"creatinine\": null, \"diastolic_blood_pressure\": null, \"glucose\": 140.0, \"hba1c\": null, \"hdl_cholesterol\": null, \"heart_rate\": null, \"hematocrit\": null, \"hemoglobin\": null, \"insulin\": null, \"ldl_cholesterol\": null, \"mean_corpuscular_hemoglobin\": null, \"mean_corpuscular_hemoglobin_concentration\": null, \"mean_corpuscular_volume\": null, \"platelets\": null, \"red_blood_cells\": null, \"systolic_blood_pressure\": null, \"triglycerides\": null, \"troponin\": null, \"white_blood_cells\": null}",
+    "rsa_signature": "D5wgUXfhlI5HjZsx4mGEex+OUcIcdC/yBdZWA2NNwCj7oGcjYfzdb2+u1/Tc75lwI8GzuauyAIoIRl4j5ihWJ1SQ4S2Bm6reM6SaJQQ55BrZ4gsNYcc33vdnMFF+66mdXk0LzGnsu3j+uCYZxVhwG0m8BN5KA0PrazTy12QtyAwYCnYZVRDrUcjQ6hmGMbm6yDwDUnDN70mveoTVnwgWczW74S9oML10tECsN0vvjgp7quRnVxX0kWgQgyySy5UsYhgQPf4Tr1jk8+2ItSvDAMCAmC+W/Q9gJgYzfr0CZbD5/PNyhYaZ5dKbuvRsYv75moPRzWFPvJVfvq89gukkud0nw/zxm1hrwUZiWinpGOxC8wITr74mo+9VACkC3/MR+IQGlCC+dE2b7jAtnK0nGJE2ZpzYYtt8jnrU7/e0MppG61nTGuFbjTkt9c+/9VYngiS2LrEElXPwkUV0LmlgQPyPSbD/hZIKf8o0XKaf6HPs/vYIyWOrDqXVhe4hgaV7BT1h8AzHXlBLhU1TJrEXSnKIk+DEvSJQqtKHjueWv398MhP+I9GKgijH71pr9o2nyTtDzCzeQu9sNrW34xsKJAU23C+byEbWNPvl4Y/5L/EOXeBgCqCY+K1le4x9kjwZ4H/TKTLU/ICBm3pFFqxRbcbjjGIk5oXb62F4ZDezjNw=",
+    "hash": "54add694a0be3a01fcb5d783f78e9277e8423a3b5141b18901b590c1e37cc1ba",
+    "is_valid": true
+  },
+  {
+    "index": 29,
+    "timestamp": "2025-11-23T10:15:32.876527",
+    "data": {
+      "type": "ANALYSIS_RESULT",
+      "timestamp": "2025-11-23T10:15:32.872159",
+      "health_score": 88,
+      "triage": "Green",
+      "features_hash": "623c957f9083b8a5c3dc042afd4f9f17"
+    },
+    "prev_hash": "54add694a0be3a01fcb5d783f78e9277e8423a3b5141b18901b590c1e37cc1ba",
+    "hash": "3abaf89d5986f2896836e7d0cf3af9faa8133f43ad548631e583420a0626cac8"
+  },
+  {
+    "index": 30,
+    "timestamp": "2025-11-23T10:35:41.918549",
+    "data": {
+      "type": "ANALYSIS_RESULT",
+      "timestamp": "2025-11-23T10:35:41.918549",
+      "health_score": 81,
+      "triage": "Green",
+      "features_hash": "e7760e3a7962ae53cce7def6c70ffab3"
+    },
+    "prev_hash": "3abaf89d5986f2896836e7d0cf3af9faa8133f43ad548631e583420a0626cac8",
+    "hash": "b6f3c7085be0cea01b9eba7734d90de51dfbf01814323aea380ee66abce01ea6"
+  },
+  {
+    "index": 31,
+    "timestamp": "2025-11-23T10:36:44.173283",
+    "data": {
+      "type": "ANALYSIS_RESULT",
+      "timestamp": "2025-11-23T10:36:44.173283",
+      "health_score": 81,
+      "triage": "Green",
+      "features_hash": "20b787d5c16a4119abbbe580f8309b63"
+    },
+    "prev_hash": "b6f3c7085be0cea01b9eba7734d90de51dfbf01814323aea380ee66abce01ea6",
+    "hash": "a89f4b6f7765e502630c45f9e265cdc49320ea958acb6026a4e1a172c7676306"
+  },
+  {
+    "index": 32,
+    "timestamp": "2025-11-23T10:40:22.929124",
+    "data": {
+      "type": "ANALYSIS_RESULT",
+      "timestamp": "2025-11-23T10:40:22.927123",
+      "health_score": 81,
+      "triage": "Green",
+      "features_hash": "20b787d5c16a4119abbbe580f8309b63"
+    },
+    "prev_hash": "a89f4b6f7765e502630c45f9e265cdc49320ea958acb6026a4e1a172c7676306",
+    "hash": "7aec6e90591293e2c4fc658752a9d4b1ed4031d50000774a1a4d3bde3f89bea3"
+  },
+  {
+    "index": 33,
+    "timestamp": "2025-11-23T10:41:46.692047",
+    "data": {
+      "type": "ANALYSIS_RESULT",
+      "timestamp": "2025-11-23T10:41:46.690664",
+      "health_score": 81,
+      "triage": "Green",
+      "features_hash": "20b787d5c16a4119abbbe580f8309b63"
+    },
+    "prev_hash": "7aec6e90591293e2c4fc658752a9d4b1ed4031d50000774a1a4d3bde3f89bea3",
+    "hash": "4c7e3d106bbdec7aeb8bd23ed726cfb640af79fbe1c526c53567585f65f185fb"
+  },
+  {
+    "index": 34,
+    "timestamp": "2025-11-23T10:43:45.096069",
+    "data": {
+      "type": "ANALYSIS_RESULT",
+      "timestamp": "2025-11-23T10:43:45.096069",
+      "health_score": 79,
+      "triage": "Yellow",
+      "features_hash": "245d4b725d0f2fcc01631be17fd40433"
+    },
+    "prev_hash": "4c7e3d106bbdec7aeb8bd23ed726cfb640af79fbe1c526c53567585f65f185fb",
+    "hash": "68f13c3491d55cc3865ce1910b0978a2273ac6e6826205ff24fac91ce2c88d4d"
+  },
+  {
+    "index": 35,
+    "timestamp": "2025-11-23T10:48:30.557313",
+    "data": {
+      "type": "ANALYSIS_RESULT",
+      "timestamp": "2025-11-23T10:48:30.557313",
+      "health_score": 81,
+      "triage": "Green",
+      "features_hash": "e7760e3a7962ae53cce7def6c70ffab3"
+    },
+    "prev_hash": "68f13c3491d55cc3865ce1910b0978a2273ac6e6826205ff24fac91ce2c88d4d",
+    "hash": "9aaa34cfd04945bd2098f13e4633ee288fc85ec4a89569f6d3b5590e68e7d534"
+  },
+  {
+    "index": 36,
+    "timestamp": "2025-11-23T10:52:36.857791",
+    "data": {
+      "type": "ANALYSIS_RESULT",
+      "timestamp": "2025-11-23T10:52:36.848551",
+      "health_score": 59,
+      "triage": "Red",
+      "features_hash": "e7760e3a7962ae53cce7def6c70ffab3"
+    },
+    "prev_hash": "9aaa34cfd04945bd2098f13e4633ee288fc85ec4a89569f6d3b5590e68e7d534",
+    "hash": "2776540ec14ec21dd10b9143014ea34f778f6dad7512a097504b12598af73350"
   }
 ]
